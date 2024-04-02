@@ -253,6 +253,7 @@
     };
   }
 
+namespace TerminalCommander {
   class TerminalCommander {
     public:
       /*! @brief Class constructor
@@ -270,68 +271,68 @@
       */
       void loop(void);
 
-      private:
-        TerminalCommanderTypes::error_t lastError;
-        TerminalCommanderTypes::terminal_command_t command;
-        Stream *pSerial;
-        TwoWire *pWire;
+    private:
+      TerminalCommanderTypes::error_t lastError;
+      TerminalCommanderTypes::terminal_command_t command;
+      Stream *pSerial;
+      TwoWire *pWire;
 
-        /*! @brief  Execute incoming serial string by command or protocol type
-        *
-        * @details Detailed description here.
-        * 
-        * @param   void
-        * @returns void
-        */
-        void serialCommandProcessor(void);
+      /*! @brief  Execute incoming serial string by command or protocol type
+      *
+      * @details Detailed description here.
+      * 
+      * @param   void
+      * @returns void
+      */
+      void serialCommandProcessor(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
-        * @returns void
-        */
-        void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
+      /*! @brief  Error-check the incoming ASCII command string
+      *
+      * @details Detailed description here.
+      * 
+      * @param   param Description of the input parameter
+      * @returns void
+      */
+      void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
 
-        /*! @brief  Return the integer represented by a character array
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @returns uint32_t numeric value represented by input char array
-        */
-        //void checkCommandCharacterValidity(void) 
+      /*! @brief  Return the integer represented by a character array
+      *
+      * @details Detailed description here.
+      * 
+      * @param   param    Description of the input parameter
+      * @returns uint32_t numeric value represented by input char array
+      */
+      //void checkCommandCharacterValidity(void) 
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        int32_t getIntFromCharArray(const char *char_array, size_t array_size);
+      /*! @brief  Error-check the incoming ASCII command string
+      *
+      * @details Detailed description here.
+      * 
+      * @param   param    Description of the input parameter
+      * @param   param    Description of the input parameter
+      * @returns uint16_t Total valid character count of incoming buffer
+      */
+      int32_t getIntFromCharArray(const char *char_array, size_t array_size);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        uint16_t power_uint8(uint8_t base, uint8_t exponent);
+      /*! @brief  Error-check the incoming ASCII command string
+      *
+      * @details Detailed description here.
+      * 
+      * @param   param    Description of the input parameter
+      * @param   param    Description of the input parameter
+      * @returns uint16_t Total valid character count of incoming buffer
+      */
+      uint16_t power_uint8(uint8_t base, uint8_t exponent);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        void scanTwoWireBus(void);
-    };
-
+      /*! @brief  Error-check the incoming ASCII command string
+      *
+      * @details Detailed description here.
+      * 
+      * @param   param    Description of the input parameter
+      * @param   param    Description of the input parameter
+      * @returns uint16_t Total valid character count of incoming buffer
+      */
+      void scanTwoWireBus(void);
+  };
+}
 #endif
