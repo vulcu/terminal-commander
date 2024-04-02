@@ -1,13 +1,22 @@
+# VSCode
+.vscode/
+
+#MacOS
+.DS_Store
+
+# Build Directory
+build/
+
 # Prerequisites
 *.d
 
-# Object files
+# Objects and Output
 *.o
-*.ko
-*.obj
 *.elf
+*.eep
+*.cache
 
-# Linker output
+# Linker Output
 *.ilk
 *.map
 *.exp
@@ -22,31 +31,8 @@
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
+# Binaries
+*.bin
 *.out
 *.app
-*.i*86
-*.x86_64
 *.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
