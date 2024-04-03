@@ -23,6 +23,8 @@
     #error "TwoWire buffer size must not exceed terminal character buffer size"
   #elif (TERM_COMMAND_PREFIX_SIZE != 4U)
     #error "Command prefix sizes other than 4 characters are unsupported"
+  #elif (TERM_TWOWIRE_BUFFER_SIZE > 32U)
+    #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
 
   namespace TerminalCommander {
