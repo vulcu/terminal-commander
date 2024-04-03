@@ -422,10 +422,13 @@ namespace TerminalCommander {
       else {
         // math library uses a lot of program space so don't use pow() here
         uint16_t order_of_mag = power_uint8(10, (array_size - (k + 1)));
+
+        /// TODO: Since always multiplying by power of 10 might not need call to power_uint8()
         numeric_value += ((char_array[k] - 48) * order_of_mag);
       }
     }
 
+    /// TODO: Test if this is actually used when number is negative?
     if (is_negative) {
       numeric_value *= -1;
     }
@@ -466,7 +469,7 @@ namespace TerminalCommander {
       // This uses the return value of Write.endTransmisstion to
       // see if a device acknowledgement occured at the address.
       Wire.beginTransmission(address);
-      error = Wire.endTransmission();
+      error = (twi_error_type_t)(Wire.endTransmission());
 
       if (error == NO_ERROR) {
         Serial.print(F("I2C device found at address 0x"));
