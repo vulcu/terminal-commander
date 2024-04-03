@@ -363,7 +363,6 @@ namespace TerminalCommander {
       case GPIO: {
         const int8_t case_select = (int8_t)(getIntFromCharArray(command.data, (size_t)command.length));
 
-  pSerial->println(case_select);
         if (lastError.flag) {
           return;
         }
@@ -395,10 +394,10 @@ namespace TerminalCommander {
   }
 
 
-  int32_t TerminalCommander::getIntFromCharArray(const char *char_array, size_t array_size) {
+  int16_t TerminalCommander::getIntFromCharArray(const char *char_array, size_t array_size) {
     bool is_negative = false;
     bool is_fractional = false;
-    int32_t numeric_value = 0;
+    int16_t numeric_value = 0;
 
     for (uint8_t k = 0; k < array_size; k++) {
       if (char_array[k] == 46) {

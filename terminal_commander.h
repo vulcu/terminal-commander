@@ -312,7 +312,7 @@ namespace TerminalCommander {
       * @param   param    Description of the input parameter
       * @returns uint16_t Total valid character count of incoming buffer
       */
-      int32_t getIntFromCharArray(const char *char_array, size_t array_size);
+      int16_t getIntFromCharArray(const char *char_array, size_t array_size);
 
       /*! @brief  Error-check the incoming ASCII command string
       *
