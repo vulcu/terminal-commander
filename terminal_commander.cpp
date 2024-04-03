@@ -117,6 +117,7 @@ namespace TerminalCommander {
     this->execCallback = callback;
   }
 
+  /// TODO: break this up into smaller methods
   void TerminalCommander::serialCommandProcessor(void) {
     // check validity of input command string before parsing commands
     uint16_t idx;
@@ -394,7 +395,7 @@ namespace TerminalCommander {
     strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
   }
 
-
+  /// TODO: fix handling of negative numbers because it's currently broken
   int16_t TerminalCommander::getIntFromCharArray(const char *char_array, size_t array_size) {
     bool is_negative = false;
     bool is_fractional = false;
