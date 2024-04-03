@@ -12,6 +12,8 @@ namespace TerminalCommander {
 
   // put common error messages into Program memory to save SRAM space
   const char strErrNoError[] PROGMEM = "No Error\n";
+  const char strErrUndefinedExecFunctionPtr[] PROGMEM = "Error: EXEC function is not defined (null pointer)\n";
+  const char strErrUndefinedGpioFunctionPtr[] PROGMEM = "Error: GPIO function is not defined (null pointer)\n";
   const char strErrNoInput[] PROGMEM = "Error: No Input\n";
   const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
   const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
@@ -34,6 +36,8 @@ namespace TerminalCommander {
   const char *const string_error_table[] PROGMEM = 
   {
     strErrNoError,
+    strErrUndefinedExecFunctionPtr, 
+    strErrUndefinedGpioFunctionPtr,
     strErrNoInput, 
     strErrUnrecognizedInput, 
     strErrInvalidSerialCmdLength, 
@@ -357,7 +361,8 @@ namespace TerminalCommander {
           this->execCallback(case_select);
         }
         else {
-          // handle error here?
+          writeErrorMsgToSerialBuffer(lastError.set(UndefinedExecFunctionPtr), lastError.message);
+          return;
         }
       }
       break;
@@ -374,15 +379,13 @@ namespace TerminalCommander {
           this->gpioCallback(case_select);
         }
         else {
-          // handle error here?
+          writeErrorMsgToSerialBuffer(lastError.set(UndefinedGpioFunctionPtr), lastError.message);
+          return;
         }
       }
       break;
 
-      default: {
-        // we shouldn't ever be here!
-      }
-      break;
+      default: { /** TODO: this can probably be removed */ } break;
     }
   }
 

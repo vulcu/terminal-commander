@@ -29,6 +29,14 @@
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
+      // the following only works for lambda expressions that do NOT capture local variables
+      // e.g. [](){}
+      typedef void (*cmd_callback_t)(uint8_t);
+
+      // alt: the following works for lambda expressions that capture local variables
+      // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
+      // typedef std::function<void(uint8_t)> cmd_callback_t
+
       enum terminal_protocols_t {
         INVALID = 0,
         I2C_READ, 
@@ -40,6 +48,8 @@
 
       enum error_type_t {
         NoError = 0,
+        UndefinedExecFunctionPtr, 
+        UndefinedGpioFunctionPtr, 
         NoInput, 
         UnrecognizedInput, 
         InvalidSerialCmdLength, 
@@ -256,15 +266,6 @@
       };
     }
 
-    // the following only works for lambda expressions that do NOT capture local variables
-    // e.g. [](){}
-    typedef void (*cmd_callback_t)(uint8_t);
-
-    // alt: the following works for lambda expressions that capture local variables
-    // e.g. [&](){}
-    // #include <functional>
-    // typedef std::function<void(uint8_t)> cmd_callback_t
-
     class TerminalCommander {
       public:
         /*! @brief Class constructor
@@ -289,7 +290,7 @@
         *              // do things
         *          });
         */
-        void onGpio(cmd_callback_t callback);
+        void onGpio(TerminalCommanderTypes::cmd_callback_t callback);
 
         /*! @brief  Add callback function for specific command.
         *
@@ -298,11 +299,11 @@
         *              // do things
         *          });
         */
-        void onExec(cmd_callback_t callback);
+        void onExec(TerminalCommanderTypes::cmd_callback_t callback);
 
       private:
-        cmd_callback_t gpioCallback = nullptr;
-        cmd_callback_t execCallback = nullptr;
+        TerminalCommanderTypes::cmd_callback_t gpioCallback = nullptr;
+        TerminalCommanderTypes::cmd_callback_t execCallback = nullptr;
         TerminalCommanderTypes::error_t lastError;
         TerminalCommanderTypes::terminal_command_t command;
         Stream *pSerial;
