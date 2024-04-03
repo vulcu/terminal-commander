@@ -105,6 +105,14 @@ namespace TerminalCommander {
     }
   }
 
+  void TerminalCommander::onGpio(cmd_callback_t callback) {
+    this->gpioCallback = callback;
+  }
+
+  void TerminalCommander::onExec(cmd_callback_t callback) {
+    this->execCallback = callback;
+  }
+
   void TerminalCommander::serialCommandProcessor(void) {
     // check validity of input command string before parsing commands
     uint16_t idx;
@@ -345,16 +353,11 @@ namespace TerminalCommander {
           return;
         }
 
-        switch (case_select) {
-          case 0: {
-
-          }
-          break;
-          default: {
-            writeErrorMsgToSerialBuffer(lastError.set(UnrecognizedExecRequest), lastError.message);
-            return;
-          }
-          break;
+        if (this->execCallback != nullptr) {
+          this->execCallback(case_select);
+        }
+        else {
+          // handle error here?
         }
       }
       break;
@@ -367,16 +370,11 @@ namespace TerminalCommander {
           return;
         }
 
-        switch (case_select) {
-          case 0: {
-
-          }
-          break;
-          default: {
-            writeErrorMsgToSerialBuffer(lastError.set(UnrecognizedGPIOSelection), lastError.message);
-            return;
-          }
-          break;
+        if (this->gpioCallback != nullptr) {
+          this->gpioCallback(case_select);
+        }
+        else {
+          // handle error here?
         }
       }
       break;
