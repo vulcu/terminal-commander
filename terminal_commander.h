@@ -31,7 +31,7 @@
     namespace TerminalCommanderTypes {
       // the following only works for lambda expressions that do NOT capture local variables
       // e.g. [](){}
-      typedef void (*cmd_callback_t)(uint8_t);
+      typedef void (*user_callback_t)(uint8_t);
 
       // alt: the following works for lambda expressions that capture local variables
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
@@ -42,14 +42,12 @@
         I2C_READ, 
         I2C_WRITE, 
         I2C_SCAN, 
-        EXECUTE, 
-        GPIO, 
+        USER_CALLBACK,  
       };
 
       enum error_type_t {
         NoError = 0,
-        UndefinedExecFunctionPtr, 
-        UndefinedGpioFunctionPtr, 
+        UndefinedUserFunctionPtr,
         NoInput, 
         UnrecognizedInput, 
         InvalidSerialCmdLength, 
@@ -109,9 +107,9 @@
          * @returns Description of the returned parameter
          */
         error_type_t set(error_type_t error_type) {
-          flag = true;
-          type = error_type;
-          return type;
+          this->flag = true;
+          this->type = error_type;
+          return this->type;
         }
 
         /**
@@ -123,9 +121,9 @@
          * @returns Description of the returned parameter
          */
         void clear(void) {
-          flag = false;
-          warning = false;
-          type = NoError;
+          this->flag    = false;
+          this->warning = false;
+          this->type    = NoError;
         }
 
         /**
@@ -137,8 +135,8 @@
          * @returns Description of the returned parameter
          */
         void reset(void) {
-          clear();
-          memset(message,  '\0', sizeof(message));
+          this->clear();
+          memset(this->message,  '\0', sizeof(this->message));
         }
       };
 
@@ -196,16 +194,16 @@
          */
         void next(char character) {
           if (character == TERM_LINE_ENDING) {
-            complete = true;
+            this->complete = true;
             return;
           } 
           
           if (index >= TERM_CHAR_BUFFER_SIZE) {
-            overflow = true;
+            this->overflow = true;
             return;
           }
           
-          serialRx[index++] = character;
+          serialRx[this->index++] = character;
         }
 
         /**
@@ -217,9 +215,9 @@
          * @returns void
          */
         void flushInput(void) {
-          memset(serialRx,  '\0', sizeof(serialRx));
-          complete = false;
-          overflow = false;
+          memset(this->serialRx,  '\0', sizeof(this->serialRx));
+          this->complete = false;
+          this->overflow = false;
         }
 
         /**
@@ -231,7 +229,7 @@
          * @returns void
          */
         void flushTwoWire(void) {
-          memset(twowire, 0, sizeof(twowire));
+          memset(this->twowire, 0, sizeof(this->twowire));
         }
 
         /**
@@ -243,12 +241,12 @@
          * @returns void
          */
         void initialize(void) {
-          flushTwoWire();
-          memset(prefix,  '\0', sizeof(prefix));
-          memset(data, '\0', sizeof(data));
-          protocol = INVALID;
-          index = 0U;
-          length = 0U;
+          this->flushTwoWire();
+          memset(this->prefix,  '\0', sizeof(this->prefix));
+          memset(this->data, '\0', sizeof(this->data));
+          this->protocol = INVALID;
+          this->index    = 0U;
+          this->length   = 0U;
         }
 
         /**
@@ -260,8 +258,8 @@
          * @returns void
          */
         void reset(void) {
-          flushInput();
-          initialize();
+          this->flushInput();
+          this->initialize();
         }
       };
     }
@@ -286,24 +284,14 @@
         /*! @brief  Add callback function for specific command.
         *
         * @details Usage:
-        *          terminal.onGpio([](uint8_t command){
+        *          attachUserFcn([](uint8_t command){
         *              // do things
         *          });
         */
-        void onGpio(TerminalCommanderTypes::cmd_callback_t callback);
-
-        /*! @brief  Add callback function for specific command.
-        *
-        * @details Usage:
-        *          terminal.onExec([&](uint8_t command){
-        *              // do things
-        *          });
-        */
-        void onExec(TerminalCommanderTypes::cmd_callback_t callback);
+        void onUserCommand(TerminalCommanderTypes::user_callback_t callback);
 
       private:
-        TerminalCommanderTypes::cmd_callback_t gpioCallback = nullptr;
-        TerminalCommanderTypes::cmd_callback_t execCallback = nullptr;
+        TerminalCommanderTypes::user_callback_t userCallbackFn = nullptr;
         TerminalCommanderTypes::error_t lastError;
         TerminalCommanderTypes::terminal_command_t command;
         Stream *pSerial;

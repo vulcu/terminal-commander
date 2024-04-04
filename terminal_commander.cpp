@@ -11,33 +11,31 @@ namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
   // put common error messages into Program memory to save SRAM space
-  const char strErrNoError[] PROGMEM = "No Error\n";
-  const char strErrUndefinedExecFunctionPtr[] PROGMEM = "Error: EXEC function is not defined (null pointer)\n";
-  const char strErrUndefinedGpioFunctionPtr[] PROGMEM = "Error: GPIO function is not defined (null pointer)\n";
-  const char strErrNoInput[] PROGMEM = "Error: No Input\n";
-  const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
-  const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
-  const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
-  const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command Length Exceeds Limit\n";
-  const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
-  const char strErrInvalidTwoWireReadRegister[] PROGMEM = "Error: Invalid or Undefined TwoWire Read Register\n";
-  const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
-  const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
-  const char strErrInvalidDeviceAddr[] PROGMEM = "Request Error: Invalid device address\n";
-  const char strErrUnrecognizedI2CRequest[] PROGMEM = "Error: Unrecognized I2C request\n";
-  const char strErrUnrecognizedExecRequest[] PROGMEM = "Error: Unrecognized execution request\n";
-  const char strErrUnrecognizedGPIOSelection[] PROGMEM = "Error: Unrecognized GPIO selection\n";
-  const char strErrCommandDataEmpty[] PROGMEM = "Input Error: Protocol specified but command empty\n";
-  const char strErrNonNumeric[] PROGMEM = "Input Error: Input value must be numeric\n";
-  const char strErrNumericFormat[] PROGMEM = "Input Error: Unrecognized numeric formatting\n";
-  const char strErrPositiveIntVal[] PROGMEM = "Input Error: Input value must be positive integer\n";
-  const char strErrWriteProtectedLock[] PROGMEM = "Write Failed: Write-Protected Register Locked\n";
+  static const char strErrNoError[] PROGMEM = "No Error\n";
+  static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
+  static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
+  static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
+  static const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
+  static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
+  static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command Length Exceeds Limit\n";
+  static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
+  static const char strErrInvalidTwoWireReadRegister[] PROGMEM = "Error: Invalid or Undefined TwoWire Read Register\n";
+  static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
+  static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
+  static const char strErrInvalidDeviceAddr[] PROGMEM = "Request Error: Invalid device address\n";
+  static const char strErrUnrecognizedI2CRequest[] PROGMEM = "Error: Unrecognized I2C request\n";
+  static const char strErrUnrecognizedExecRequest[] PROGMEM = "Error: Unrecognized execution request\n";
+  static const char strErrUnrecognizedGPIOSelection[] PROGMEM = "Error: Unrecognized GPIO selection\n";
+  static const char strErrCommandDataEmpty[] PROGMEM = "Input Error: Protocol specified but command empty\n";
+  static const char strErrNonNumeric[] PROGMEM = "Input Error: Input value must be numeric\n";
+  static const char strErrNumericFormat[] PROGMEM = "Input Error: Unrecognized numeric formatting\n";
+  static const char strErrPositiveIntVal[] PROGMEM = "Input Error: Input value must be positive integer\n";
+  static const char strErrWriteProtectedLock[] PROGMEM = "Write Failed: Write-Protected Register Locked\n";
 
-  const char *const string_error_table[] PROGMEM = 
+  static const char *const string_error_table[] PROGMEM = 
   {
     strErrNoError,
-    strErrUndefinedExecFunctionPtr, 
-    strErrUndefinedGpioFunctionPtr,
+    strErrUndefinedUserFunctionPtr, 
     strErrNoInput, 
     strErrUnrecognizedInput, 
     strErrInvalidSerialCmdLength, 
@@ -61,105 +59,98 @@ namespace TerminalCommander {
   TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
     this->pSerial = pSerial;
     this->pWire = pWire;
-
-    error_t lastError;
-    terminal_command_t command;
   };
 
   void TerminalCommander::loop(void) {
-    while(pSerial->available() > 0) {
+    while(this->pSerial->available() > 0) {
       // get the new byte
-      command.next((char)pSerial->read());
+      this->command.next((char)this->pSerial->read());
     };
 
-    if (command.overflow) {
+    if (this->command.overflow) {
       // discard incoming data until the serial line ending is received
       while(1) {
-        if (pSerial->available() > 0) {
-          char character = (char)pSerial->read();
+        if (this->pSerial->available() > 0) {
+          char character = (char)this->pSerial->read();
           if (character == TERM_LINE_ENDING) { 
             break;
           }
         }
       }
-      writeErrorMsgToSerialBuffer(lastError.set(InvalidSerialCmdLength), lastError.message);
+      writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
       for(uint8_t k = 0; k < TERM_CHAR_BUFFER_SIZE; k++) {
-        pSerial->print(lastError.message[k]);
+        this->pSerial->print(this->lastError.message[k]);
       }
-      pSerial->print('\n');
-      lastError.clear();
-      command.reset();
+      this->pSerial->print('\n');
+      this->lastError.clear();
+      this->command.reset();
     }
-    else if (command.complete) {
-      serialCommandProcessor();
+    else if (this->command.complete) {
+      this->serialCommandProcessor();
 
-      if (lastError.flag) {
+      if (this->lastError.flag) {
         for(uint8_t k = 0; k < (TERM_CHAR_BUFFER_SIZE - 1); k++) {
-          pSerial->print(lastError.message[k]);
+          this->pSerial->print(this->lastError.message[k]);
         }
-        pSerial->print('\n');
-        lastError.clear();
+        this->pSerial->print('\n');
+        this->lastError.clear();
       }
       else {
-        pSerial->print('\n');
+        this->pSerial->print('\n');
       }
 
       // clear the input buffer array and reset serial logic
-      command.reset();
+      this->command.reset();
     }
   }
 
-  void TerminalCommander::onGpio(cmd_callback_t callback) {
-    this->gpioCallback = callback;
-  }
-
-  void TerminalCommander::onExec(cmd_callback_t callback) {
-    this->execCallback = callback;
+  void TerminalCommander::onUserCommand(user_callback_t callback) {
+    this->userCallbackFn = callback;
   }
 
   /// TODO: break this up into smaller methods
   void TerminalCommander::serialCommandProcessor(void) {
     // check validity of input command string before parsing commands
     uint16_t idx;
-    for (idx = 0; idx < sizeof(command.serialRx); idx++) {
+    for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
       // check input serial buffer is only alpha-numeric characters
-      if (((uint8_t)command.serialRx[idx] > 96) && ((uint8_t)command.serialRx[idx] < 122)) {
+      if (((uint8_t)this->command.serialRx[idx] > 96) && ((uint8_t)this->command.serialRx[idx] < 122)) {
         // these are lower-case letters [a-z]
       }
-      else if (((uint8_t)command.serialRx[idx] > 47) && ((uint8_t)command.serialRx[idx] < 58)) {
+      else if (((uint8_t)this->command.serialRx[idx] > 47) && ((uint8_t)this->command.serialRx[idx] < 58)) {
         // these are numbers [0-9]
       }
-      else if (((uint8_t)command.serialRx[idx] > 64) && ((uint8_t)command.serialRx[idx] < 91)) {
+      else if (((uint8_t)this->command.serialRx[idx] > 64) && ((uint8_t)this->command.serialRx[idx] < 91)) {
         // these are upper-case letters [A-Z]
       }
-      else if ((uint8_t)command.serialRx[idx] == 45) {
+      else if ((uint8_t)this->command.serialRx[idx] == 45) {
         // this is the '-' symbol which could be indicating a negative value
       }
-      else if ((uint8_t)command.serialRx[idx] == 46) {
+      else if ((uint8_t)this->command.serialRx[idx] == 46) {
         // this is the '.' symbol which could be indicating a decimal value
       }
-      else if ((uint8_t)command.serialRx[idx] == 44) {
+      else if ((uint8_t)this->command.serialRx[idx] == 44) {
         // this is the ',' symbol which could be indicating separated values
       }
-      else if (((uint8_t)command.serialRx[idx] == 10) || 
-              ((uint8_t)command.serialRx[idx] == 13) ||  
-              ((uint8_t)command.serialRx[idx] == 32)) {
+      else if (((uint8_t)this->command.serialRx[idx] == 10) || 
+              ((uint8_t)this->command.serialRx[idx] == 13) ||  
+              ((uint8_t)this->command.serialRx[idx] == 32)) {
         // this is a space character which could be indicating separated parameters
       }
-      else if (command.serialRx[idx] == '\0') {
+      else if (this->command.serialRx[idx] == '\0') {
         // end of serial input data has been reached
         break;
       }
       else {
         // an input buffer value was unrecognized
-        writeErrorMsgToSerialBuffer(lastError.set(UnrecognizedInput), lastError.message);
+        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
         return;
       }
     }
 
     if (idx == 0) {
       // input serial buffer is empty
-      writeErrorMsgToSerialBuffer(lastError.set(NoInput), lastError.message);
+      writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
       return;
     }
 
@@ -167,220 +158,196 @@ namespace TerminalCommander {
     uint8_t data_index = 0;
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
       // remove whitespace from input character string
-      if (((uint8_t)command.serialRx[serialrx_index] != 10) && 
-          ((uint8_t)command.serialRx[serialrx_index] != 13) &&  
-          ((uint8_t)command.serialRx[serialrx_index] != 32)) {
-        if (command.serialRx[serialrx_index] == '\0') {
+      if (((uint8_t)this->command.serialRx[serialrx_index] != 10) && 
+          ((uint8_t)this->command.serialRx[serialrx_index] != 13) &&  
+          ((uint8_t)this->command.serialRx[serialrx_index] != 32)) {
+        if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
           break;
         }
         else if (data_index < TERM_COMMAND_PREFIX_SIZE) {
-          command.prefix[data_index] = command.serialRx[serialrx_index];
+          this->command.prefix[data_index] = this->command.serialRx[serialrx_index];
         }
         else {
-          command.data[data_index - TERM_COMMAND_PREFIX_SIZE] = command.serialRx[serialrx_index];
+          this->command.data[data_index - TERM_COMMAND_PREFIX_SIZE] = this->command.serialRx[serialrx_index];
         }
         data_index++;
       }
     }
-    command.length = data_index - TERM_COMMAND_PREFIX_SIZE;
+    this->command.length = data_index - TERM_COMMAND_PREFIX_SIZE;
 
-    if ((command.prefix[0] == 'i' || command.prefix[0] == 'I') &&
-        (command.prefix[1] == '2' || command.prefix[1] == '@') &&
-        (command.prefix[2] == 'c' || command.prefix[2] == 'C')) {
+    if ((this->command.prefix[0] == 'i' || this->command.prefix[0] == 'I') &&
+        (this->command.prefix[1] == '2' || this->command.prefix[1] == '@') &&
+        (this->command.prefix[2] == 'c' || this->command.prefix[2] == 'C')) {
 
       // TwoWire commands require more strict validation and parsing
-      for (idx = 0; idx < ((uint8_t)sizeof(command.twowire)); idx++) {
-        if (command.data[idx] == '\0') {
+      for (idx = 0; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
+        if (this->command.data[idx] == '\0') {
           // end of serial input data has been reached
           break;
         }
         else {
-          command.twowire[idx] = (uint8_t)command.data[idx];
+          this->command.twowire[idx] = (uint8_t)this->command.data[idx];
         }
 
-        if ((command.twowire[idx] > 96) && (command.twowire[idx] < 103)) {
+        if ((this->command.twowire[idx] > 96) && (this->command.twowire[idx] < 103)) {
           // check for lower-case letters [a-f] and convert to upper-case
-          command.twowire[idx] -= 32;
+          this->command.twowire[idx] -= 32;
         }
 
-        if ((command.twowire[idx] > 47) && (command.twowire[idx] < 58)) {
+        if ((this->command.twowire[idx] > 47) && (this->command.twowire[idx] < 58)) {
           // check for numbers [0-9] and convert ASCII value to numeric
-          command.twowire[idx] -= 48;
+          this->command.twowire[idx] -= 48;
         }
-        else if ((command.twowire[idx] > 64) && (command.twowire[idx] < 71)) {
+        else if ((this->command.twowire[idx] > 64) && (this->command.twowire[idx] < 71)) {
             // check for upper-case letters [A-F] and convert ASCII to numeric
-            command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
+            this->command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
         }
         else {
           // an command character is invalid or unrecognized
-          writeErrorMsgToSerialBuffer(lastError.set(InvalidTwoWireCharacter), lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCharacter), this->lastError.message);
           return;
         }
       }
 
       if (idx == 0) {
         // command buffer is empty
-        writeErrorMsgToSerialBuffer(lastError.set(NoInput), lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
         return;
       }
       else if ((idx >> 1) != ((idx + 1) >> 1)) {
         // command buffer does not specify hex values in multiples of 8 bits
-        writeErrorMsgToSerialBuffer(lastError.set(InvalidHexValuePair), lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidHexValuePair), this->lastError.message);
         return;
       }
 
-      if (command.prefix[3] == 'r' || command.prefix[3] == 'R') {
-        command.protocol = I2C_READ;
-        pSerial->print(F("I2C Read\n"));
-        if (command.length < 4) {
-          writeErrorMsgToSerialBuffer(lastError.set(InvalidTwoWireReadRegister), lastError.message);
+      if (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R') {
+        this->command.protocol = I2C_READ;
+        this->pSerial->print(F("I2C Read\n"));
+        if (this->command.length < 4) {
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireReadRegister), this->lastError.message);
           return;
         }
       }
-      else if (command.prefix[3] == 'w' || command.prefix[3] == 'W') {
-        command.protocol = I2C_WRITE;
-        pSerial->print(F("I2C Write\n"));
+      else if (this->command.prefix[3] == 'w' || this->command.prefix[3] == 'W') {
+        this->command.protocol = I2C_WRITE;
+        this->pSerial->print(F("I2C Write\n"));
       }
     }
-    else if ((command.prefix[0] == 's' || command.prefix[0] == 'S') &&
-              (command.prefix[1] == 'c' || command.prefix[1] == 'C') &&
-              (command.prefix[2] == 'a' || command.prefix[2] == 'A') &&
-              (command.prefix[3] == 'n' || command.prefix[3] == 'N')) {
-      command.protocol = I2C_SCAN;
-      pSerial->print(F("Scan I2C Bus for Available Devices\n"));
+    else if ((this->command.prefix[0] == 's' || this->command.prefix[0] == 'S') &&
+             (this->command.prefix[1] == 'c' || this->command.prefix[1] == 'C') &&
+             (this->command.prefix[2] == 'a' || this->command.prefix[2] == 'A') &&
+             (this->command.prefix[3] == 'n' || this->command.prefix[3] == 'N')) {
+      this->command.protocol = I2C_SCAN;
+      this->pSerial->print(F("Scan I2C Bus for Available Devices\n"));
     }
-    else if ((command.prefix[0] == 'e' || command.prefix[0] == 'E') &&
-              (command.prefix[1] == 'x' || command.prefix[1] == 'X') &&
-              (command.prefix[2] == 'e' || command.prefix[2] == 'E') &&
-              (command.prefix[3] == 'c' || command.prefix[3] == 'C')) {
-      command.protocol = EXECUTE;
-      pSerial->print(F("Execute Configuration\n"));
-    }
-    else if ((command.prefix[0] == 'g' || command.prefix[0] == 'G') &&
-              (command.prefix[1] == 'p' || command.prefix[1] == 'P') &&
-              (command.prefix[2] == 'i' || command.prefix[2] == 'I') &&
-              (command.prefix[3] == 'o' || command.prefix[3] == 'O')) {
-      command.protocol = GPIO;
-      pSerial->print(F("GPIO Command\n"));
+    else if ((this->command.prefix[0] == 'u' || this->command.prefix[0] == 'U') &&
+             (this->command.prefix[1] == 's' || this->command.prefix[1] == 'S') &&
+             (this->command.prefix[2] == 'e' || this->command.prefix[2] == 'E') &&
+             (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R')) {
+      this->command.protocol = USER_CALLBACK;
+      this->pSerial->print(F("Execute Configuration\n"));
     }
     else {
-      writeErrorMsgToSerialBuffer(lastError.set(UnrecognizedProtocol), lastError.message);
+      writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       return;
     }
 
-    if ((command.length == 0) && (command.protocol != I2C_SCAN)) {
-      writeErrorMsgToSerialBuffer(lastError.set(CommandDataEmpty), lastError.message);
+    if ((this->command.length == 0) && (this->command.protocol != I2C_SCAN)) {
+      writeErrorMsgToSerialBuffer(this->lastError.set(CommandDataEmpty), this->lastError.message);
       return;
     }
 
     switch (command.protocol) {
       case I2C_READ: {
         const uint8_t i2c_address =
-          (uint8_t)((command.twowire[0] << 4) + command.twowire[1]);
+          (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         const uint8_t i2c_register =
-          (uint8_t)((command.twowire[2] << 4) + command.twowire[3]);
+          (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
 
-        pWire->beginTransmission(i2c_address);
-        pWire->write(i2c_register);
-        pWire->endTransmission();
+        this->pWire->beginTransmission(i2c_address);
+        this->pWire->write(i2c_register);
+        this->pWire->endTransmission();
         delayMicroseconds(50);
-        pWire->requestFrom(i2c_address, (uint8_t)((command.length >> 1) - 2));
+        this->pWire->requestFrom(i2c_address, (uint8_t)((command.length >> 1) - 2));
         delayMicroseconds(50);
         uint8_t twi_read_index = 0;
-        command.flushTwoWire();
-        while(pWire->available()) {
-            command.twowire[twi_read_index] = (uint8_t)pWire->read();
+        this->command.flushTwoWire();
+        while(this->pWire->available()) {
+            this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
             twi_read_index++;
             if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
-              writeErrorMsgToSerialBuffer(lastError.set(IncomingTwoWireReadLength), lastError.message);
+              this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
               return;
             }
         }
 
-        pSerial->print(F("Address: 0x"));
-        pSerial->println(i2c_address, HEX);
-        pSerial->print(F("Register: 0x"));
-        pSerial->println(i2c_register, HEX);
-        pSerial->print(F("Read Data:"));
+        this->pSerial->print(F("Address: 0x"));
+        this->pSerial->println(i2c_address, HEX);
+        this->pSerial->print(F("Register: 0x"));
+        this->pSerial->println(i2c_register, HEX);
+        this->pSerial->print(F("Read Data:"));
         if (twi_read_index == 0) {
-          pSerial->print(F(" No Data"));
+          this->pSerial->print(F(" No Data"));
         }
         else {
           for(uint8_t k = 4; k < twi_read_index; k += 2) {
-            pSerial->print(F(" 0x"));
-            pSerial->print(command.twowire[k], HEX);
-            pSerial->print(command.twowire[k+1], HEX);
+            this->pSerial->print(F(" 0x"));
+            this->pSerial->print(this->command.twowire[k], HEX);
+            this->pSerial->print(this->command.twowire[k+1], HEX);
           }
         }
-        pSerial->print('\n');
+        this->pSerial->print('\n');
 
       }
       break;
 
       case I2C_WRITE: {
         const uint8_t i2c_address =
-          (uint8_t)((command.twowire[0] << 4) + command.twowire[1]);
+          (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         const uint8_t i2c_register =
-          (uint8_t)((command.twowire[2] << 4) + command.twowire[3]);
+          (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
 
-        pWire->beginTransmission(i2c_address);
-        pWire->write(i2c_register);
-        for (uint8_t k = 4; k < command.length; k += 2) {
-          pWire->write((16 * command.twowire[k]) + command.twowire[k+1]);
+        this->pWire->beginTransmission(i2c_address);
+        this->pWire->write(i2c_register);
+        for (uint8_t k = 4; k < this->command.length; k += 2) {
+          this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
         }
-        pWire->endTransmission();
+        this->pWire->endTransmission();
 
-        pSerial->print(F("Address: 0x"));
-        pSerial->println(i2c_address, HEX);
-        pSerial->print(F("Register: 0x"));
-        pSerial->println(i2c_register, HEX);
-        pSerial->print(F("Write Data:"));
-        for(uint8_t k = 4; k < command.length; k += 2) {
-          pSerial->print(F(" 0x"));
-          pSerial->print((16 * command.twowire[k]) + command.twowire[k+1], HEX);
+        this->pSerial->print(F("Address: 0x"));
+        this->pSerial->println(i2c_address, HEX);
+        this->pSerial->print(F("Register: 0x"));
+        this->pSerial->println(i2c_register, HEX);
+        this->pSerial->print(F("Write Data:"));
+        for(uint8_t k = 4; k < this->command.length; k += 2) {
+          this->pSerial->print(F(" 0x"));
+          this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
         }
-        pSerial->print('\n');
+        this->pSerial->print('\n');
       }
       break;
 
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
-        scanTwoWireBus();
+        this->scanTwoWireBus();
       }
       break;
 
-      // Exectute commands, modify configurations, reinitialize devices, etc.
-      case EXECUTE: {
-        const int8_t case_select = (int8_t)(getIntFromCharArray(command.data, (size_t)command.length));
+      // Call user-defined functions for GPIO, configurations, reinitialization, etc.
+      case USER_CALLBACK: {
+        const int8_t case_select = (int8_t)(this->getIntFromCharArray(this->command.data, (size_t)this->command.length));
 
-        if (lastError.flag) {
+        if (this->lastError.flag) {
           return;
         }
 
-        if (this->execCallback != nullptr) {
-          this->execCallback(case_select);
+        if (this->userCallbackFn != nullptr) {
+          /// TODO: modify this to pass a pointer to command.data and the size_t of command.data
+          this->userCallbackFn(case_select);
         }
         else {
-          writeErrorMsgToSerialBuffer(lastError.set(UndefinedExecFunctionPtr), lastError.message);
-          return;
-        }
-      }
-      break;
-
-      // GPIO commands, events, and sequences go here
-      case GPIO: {
-        const int8_t case_select = (int8_t)(getIntFromCharArray(command.data, (size_t)command.length));
-
-        if (lastError.flag) {
-          return;
-        }
-
-        if (this->gpioCallback != nullptr) {
-          this->gpioCallback(case_select);
-        }
-        else {
-          writeErrorMsgToSerialBuffer(lastError.set(UndefinedGpioFunctionPtr), lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(UndefinedUserFunctionPtr), this->lastError.message);
           return;
         }
       }
@@ -411,14 +378,14 @@ namespace TerminalCommander {
     for (uint8_t k = 0; k < array_size; k++) {
       if (char_array[k] == 45) {
         if (k != 0) {
-          writeErrorMsgToSerialBuffer(lastError.set(NumericFormat), lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(NumericFormat), this->lastError.message);
           return 0;
         }
         is_negative = true;
         k += 1;
       }
       else if (!((char_array[k] > 47) && (char_array[k] < 58))) {
-        writeErrorMsgToSerialBuffer(lastError.set(NonNumeric), lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(NonNumeric), this->lastError.message);
         return 0;
       }
       else {
@@ -437,9 +404,9 @@ namespace TerminalCommander {
 
     if (is_fractional) {
       // Input data value was not an integer
-      pSerial->println(F("Warning: Only integer data values are accepted"));
-      pSerial->print(F("Requested value rounded towards zero, new value is "));
-      pSerial->println(numeric_value);
+      this->pSerial->println(F("Warning: Only integer data values are accepted"));
+      this->pSerial->print(F("Requested value rounded towards zero, new value is "));
+      this->pSerial->println(numeric_value);
     }
 
     return numeric_value;
@@ -465,39 +432,39 @@ namespace TerminalCommander {
     twi_error_type_t error;
     uint8_t device_count = 0;
 
-    Serial.println(F("Scanning for I2C devices..."));
+    this->pSerial->println(F("Scanning for I2C devices..."));
 
     for(uint8_t address = 1; address <= 127; address++ ) {
       // This uses the return value of Write.endTransmisstion to
       // see if a device acknowledgement occured at the address.
-      Wire.beginTransmission(address);
-      error = (twi_error_type_t)(Wire.endTransmission());
+      this->pWire->beginTransmission(address);
+      error = (twi_error_type_t)(this->pWire->endTransmission());
 
       if (error == NO_ERROR) {
-        Serial.print(F("I2C device found at address 0x"));
+        this->pSerial->print(F("I2C device found at address 0x"));
         if (address < 0x10) {
-          Serial.print("0");
+          this->pSerial->print("0");
         }
-        Serial.println(address,HEX);
+        this->pSerial->println(address,HEX);
 
         device_count++;
       }
       else if (error == OTHER) {
-        Serial.print(F("Unknown error at address 0x"));
+        this->pSerial->print(F("Unknown error at address 0x"));
         if (address < 0x10) {
-          Serial.print("0");
+          this->pSerial->print("0");
         }
-        Serial.println(address,HEX);
+        this->pSerial->println(address,HEX);
       }
     }
 
     if (device_count == 0) {
-      Serial.println(F("No I2C devices found :("));
+      pSerial->println(F("No I2C devices found :("));
     }
     else {
-      Serial.print(F("Scan complete, "));
-      Serial.print(device_count);
-      Serial.println(F(" devices found!"));
+      pSerial->print(F("Scan complete, "));
+      pSerial->print(device_count);
+      pSerial->println(F(" devices found!"));
     }
   }
 }
