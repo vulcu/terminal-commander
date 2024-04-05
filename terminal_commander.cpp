@@ -285,7 +285,11 @@ namespace TerminalCommander {
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
-        this->pWire->endTransmission();
+        twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
+        if (error == NACK_ADDRESS) {
+          this->pSerial->print(F("Error: I2C read attempt recieved NACK"));
+          return;
+        }
         delayMicroseconds(50);
         this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.length >> 1) - 1));
         delayMicroseconds(50);
@@ -300,7 +304,7 @@ namespace TerminalCommander {
 
         this->pSerial->print(F("Read Data:"));
         if (twi_read_index == 4) {
-          this->pSerial->print(F(" No Data"));
+          this->pSerial->print(F(" No Data Received"));
         }
         else {
           for(uint8_t k = 4; k < twi_read_index; k++) {
@@ -341,19 +345,29 @@ namespace TerminalCommander {
         }
         this->pSerial->println(i2c_register, HEX);
 
-        this->pSerial->print(F("Write Data:"));
-        for(uint8_t k = 4; k < this->command.length; k += 2) {
-          this->pSerial->print(F(" 0x"));
-          this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
-        }
-        this->pSerial->print('\n');
-
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
         for (uint8_t k = 4; k < this->command.length; k += 2) {
           this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
         }
-        this->pWire->endTransmission();
+        twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
+        if (error == NACK_ADDRESS) {
+          this->pSerial->print(F("Error: I2C write attempt recieved NACK"));
+          return;
+        }
+        else {
+          this->pSerial->print(F("Write Data:"));
+          for(uint8_t k = 4; k < this->command.length; k += 2) {
+            if (this->command.twowire[k] < 0x01) {
+              this->pSerial->print(F(" 0x0"));
+            }
+            else {
+              this->pSerial->print(F(" 0x"));
+            }
+            this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
+          }
+          this->pSerial->print('\n');
+        }
       }
       break;
 
