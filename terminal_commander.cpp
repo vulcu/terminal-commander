@@ -260,41 +260,57 @@ namespace TerminalCommander {
 
     switch (command.protocol) {
       case I2C_READ: {
+        /// TODO: move this to TWI parsing section
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         const uint8_t i2c_register =
           (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
+        uint8_t twi_read_index = 4;
+        
+        if (i2c_address < 0x10) {
+          this->pSerial->print(F("Address: 0x0"));
+        }
+        else {
+          this->pSerial->print(F("Address: 0x"));
+        }
+        this->pSerial->println(i2c_address, HEX);
+
+        if (i2c_register < 0x10) {
+          this->pSerial->print(F("Register: 0x0"));
+        }
+        else {
+          this->pSerial->print(F("Register: 0x"));
+        }
+        this->pSerial->println(i2c_register, HEX);
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
         this->pWire->endTransmission();
         delayMicroseconds(50);
-        this->pWire->requestFrom(i2c_address, (uint8_t)((command.length >> 1) - 2));
+        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.length >> 1) - 1));
         delayMicroseconds(50);
-        uint8_t twi_read_index = 0;
-        this->command.flushTwoWire();
         while(this->pWire->available()) {
-            this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
-            twi_read_index++;
             if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
               this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
               return;
             }
+            this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
+            twi_read_index++;
         }
 
-        this->pSerial->print(F("Address: 0x"));
-        this->pSerial->println(i2c_address, HEX);
-        this->pSerial->print(F("Register: 0x"));
-        this->pSerial->println(i2c_register, HEX);
         this->pSerial->print(F("Read Data:"));
-        if (twi_read_index == 0) {
+        if (twi_read_index == 4) {
           this->pSerial->print(F(" No Data"));
         }
         else {
-          for(uint8_t k = 4; k < twi_read_index; k += 2) {
-            this->pSerial->print(F(" 0x"));
+          for(uint8_t k = 4; k < twi_read_index; k++) {
+            if (this->command.twowire[k] < 0x10) {
+              this->pSerial->print(F(" 0x0"));
+            }
+            else {
+              this->pSerial->print(F(" 0x"));
+            }
             this->pSerial->print(this->command.twowire[k], HEX);
-            this->pSerial->print(this->command.twowire[k+1], HEX);
           }
         }
         this->pSerial->print('\n');
@@ -303,10 +319,34 @@ namespace TerminalCommander {
       break;
 
       case I2C_WRITE: {
+        /// TODO: move this to TWI parsing section
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         const uint8_t i2c_register =
           (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
+
+        if (i2c_address < 0x10) {
+          this->pSerial->print(F("Address: 0x0"));
+        }
+        else {
+          this->pSerial->print(F("Address: 0x"));
+        }
+        this->pSerial->println(i2c_address, HEX);
+
+        if (i2c_register < 0x10) {
+          this->pSerial->print(F("Register: 0x0"));
+        }
+        else {
+          this->pSerial->print(F("Register: 0x"));
+        }
+        this->pSerial->println(i2c_register, HEX);
+
+        this->pSerial->print(F("Write Data:"));
+        for(uint8_t k = 4; k < this->command.length; k += 2) {
+          this->pSerial->print(F(" 0x"));
+          this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
+        }
+        this->pSerial->print('\n');
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
@@ -314,17 +354,6 @@ namespace TerminalCommander {
           this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
         }
         this->pWire->endTransmission();
-
-        this->pSerial->print(F("Address: 0x"));
-        this->pSerial->println(i2c_address, HEX);
-        this->pSerial->print(F("Register: 0x"));
-        this->pSerial->println(i2c_register, HEX);
-        this->pSerial->print(F("Write Data:"));
-        for(uint8_t k = 4; k < this->command.length; k += 2) {
-          this->pSerial->print(F(" 0x"));
-          this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
-        }
-        this->pSerial->print('\n');
       }
       break;
 

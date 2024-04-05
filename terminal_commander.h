@@ -17,13 +17,14 @@
   // UART TERM console input, I2C, and 'error' buffer sizes
   #define TERM_CHAR_BUFFER_SIZE    (64U)  // total length in bytes
   #define TERM_COMMAND_PREFIX_SIZE ( 4U)  // command prefix ('i2cw', 'gpio', etc)
-  #define TERM_TWOWIRE_BUFFER_SIZE (32U)  // TwoWire read/write buffer length
+  #define TERM_TWOWIRE_BUFFER_SIZE (36U)  // TwoWire read/write buffer length
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
   #elif (TERM_COMMAND_PREFIX_SIZE != 4U)
     #error "Command prefix sizes other than 4 characters are unsupported"
-  #elif (TERM_TWOWIRE_BUFFER_SIZE > 32U)
+  #elif (TERM_TWOWIRE_BUFFER_SIZE > 34U)
+    // '34' since this buffer includes address and register bytes
     #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
 
