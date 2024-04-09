@@ -38,7 +38,7 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
-      enum terminal_protocols_t {
+      typedef enum terminal_protocols_t {
         INVALID = 0,
         I2C_READ, 
         I2C_WRITE, 
@@ -46,7 +46,7 @@
         USER_CALLBACK,  
       };
 
-      enum error_type_t {
+      typedef enum error_type_t {
         NoError = 0,
         UndefinedUserFunctionPtr,
         NoInput, 
@@ -69,7 +69,7 @@
         WriteProtectedLock,
       };
 
-      enum twi_error_type_t {
+      typedef enum twi_error_type_t {
         NO_ERROR = 0,
         TX_BUFFER_OVERFLOW, 
         NACK_ADDRESS, 
