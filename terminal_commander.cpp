@@ -246,7 +246,7 @@ namespace TerminalCommander {
              (this->command.prefix[2] == 'e' || this->command.prefix[2] == 'E') &&
              (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R')) {
       this->command.protocol = USER_CALLBACK;
-      this->pSerial->print(F("Call User-Defined Function\n"));
+      this->pSerial->print(F("User Command\n"));
     }
     else {
       writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
