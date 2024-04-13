@@ -62,7 +62,7 @@
         UnrecognizedI2CRequest, 
         UnrecognizedExecRequest, 
         UnrecognizedGPIOSelection, 
-        CommandDataEmpty, 
+        UserCommandDataEmpty, 
         NonNumeric, 
         NumericFormat, 
         PositiveIntVal,  
@@ -315,6 +315,24 @@
         * @returns void
         */
         void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param Description of the input parameter
+        * @returns bool  True if buffer is not empty and all characters are allowed
+        */
+        bool isRxBufferDataValid(void);
+
+        /*! @brief  Parse and error-check the incoming TwoWire command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param Description of the input parameter
+        * @returns bool  True if buffer is not empty and all characters are allowed
+        */
+        bool parseTwoWireData(void);
 
         /*! @brief  Return the integer represented by a character array
         *

@@ -17,7 +17,7 @@ namespace TerminalCommander {
   static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
   static const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
   static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
-  static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command Length Exceeds Limit\n";
+  static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
   static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
   static const char strErrInvalidTwoWireReadRegister[] PROGMEM = "Error: Invalid or Undefined TwoWire Read Register\n";
   static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
@@ -26,7 +26,7 @@ namespace TerminalCommander {
   static const char strErrUnrecognizedI2CRequest[] PROGMEM = "Error: Unrecognized I2C request\n";
   static const char strErrUnrecognizedExecRequest[] PROGMEM = "Error: Unrecognized execution request\n";
   static const char strErrUnrecognizedGPIOSelection[] PROGMEM = "Error: Unrecognized GPIO selection\n";
-  static const char strErrCommandDataEmpty[] PROGMEM = "Input Error: Protocol specified but command empty\n";
+  static const char strErrUserCommandDataEmpty[] PROGMEM = "Input Error: User command data is missing\n";
   static const char strErrNonNumeric[] PROGMEM = "Input Error: Input value must be numeric\n";
   static const char strErrNumericFormat[] PROGMEM = "Input Error: Unrecognized numeric formatting\n";
   static const char strErrPositiveIntVal[] PROGMEM = "Input Error: Input value must be positive integer\n";
@@ -49,7 +49,7 @@ namespace TerminalCommander {
     strErrUnrecognizedI2CRequest, 
     strErrUnrecognizedExecRequest, 
     strErrUnrecognizedGPIOSelection,
-    strErrCommandDataEmpty, 
+    strErrUserCommandDataEmpty, 
     strErrNonNumeric, 
     strErrNumericFormat, 
     strErrPositiveIntVal, 
@@ -110,49 +110,9 @@ namespace TerminalCommander {
 
   /// TODO: break this up into smaller methods
   void TerminalCommander::serialCommandProcessor(void) {
-    // check validity of input command string before parsing commands
-    uint16_t idx;
-    for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
-      // check input serial buffer is only alpha-numeric characters
-      if (((uint8_t)this->command.serialRx[idx] > 96) && ((uint8_t)this->command.serialRx[idx] < 122)) {
-        // these are lower-case letters [a-z]
-      }
-      else if (((uint8_t)this->command.serialRx[idx] > 47) && ((uint8_t)this->command.serialRx[idx] < 58)) {
-        // these are numbers [0-9]
-      }
-      else if (((uint8_t)this->command.serialRx[idx] > 64) && ((uint8_t)this->command.serialRx[idx] < 91)) {
-        // these are upper-case letters [A-Z]
-      }
-      else if ((uint8_t)this->command.serialRx[idx] == 45) {
-        // this is the '-' symbol which could be indicating a negative value
-      }
-      else if ((uint8_t)this->command.serialRx[idx] == 46) {
-        // this is the '.' symbol which could be indicating a decimal value
-      }
-      else if ((uint8_t)this->command.serialRx[idx] == 44) {
-        // this is the ',' symbol which could be indicating separated values
-      }
-      else if (((uint8_t)this->command.serialRx[idx] == 10) || 
-              ((uint8_t)this->command.serialRx[idx] == 13) ||  
-              ((uint8_t)this->command.serialRx[idx] == 32)) {
-        // this is a space character which could be indicating separated parameters
-      }
-      else if (this->command.serialRx[idx] == '\0') {
-        // end of serial input data has been reached
-        break;
-      }
-      else {
-        // an input buffer value was unrecognized
-        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
-        return;
-      }
-    }
-
-    if (idx == 0) {
-      // input serial buffer is empty
-      writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+    if (!this->isRxBufferDataValid()) {
       return;
-    }
+    }    
 
     // remove spaces from incoming serial command then separate into 'prefix' and 'command'
     uint8_t data_index = 0;
@@ -180,46 +140,10 @@ namespace TerminalCommander {
         (this->command.prefix[1] == '2' || this->command.prefix[1] == '@') &&
         (this->command.prefix[2] == 'c' || this->command.prefix[2] == 'C')) {
 
-      // TwoWire commands require more strict validation and parsing
-      for (idx = 0; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
-        if (this->command.data[idx] == '\0') {
-          // end of serial input data has been reached
-          break;
-        }
-        else {
-          this->command.twowire[idx] = (uint8_t)this->command.data[idx];
-        }
-
-        if ((this->command.twowire[idx] > 96) && (this->command.twowire[idx] < 103)) {
-          // check for lower-case letters [a-f] and convert to upper-case
-          this->command.twowire[idx] -= 32;
-        }
-
-        if ((this->command.twowire[idx] > 47) && (this->command.twowire[idx] < 58)) {
-          // check for numbers [0-9] and convert ASCII value to numeric
-          this->command.twowire[idx] -= 48;
-        }
-        else if ((this->command.twowire[idx] > 64) && (this->command.twowire[idx] < 71)) {
-            // check for upper-case letters [A-F] and convert ASCII to numeric
-            this->command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
-        }
-        else {
-          // an command character is invalid or unrecognized
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCharacter), this->lastError.message);
-          return;
-        }
-      }
-
-      if (idx == 0) {
-        // command buffer is empty
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      // test if buffer represents hex value pairs and convert these from ASCII to hex
+      if (!this->parseTwoWireData()) {
         return;
-      }
-      else if ((idx >> 1) != ((idx + 1) >> 1)) {
-        // command buffer does not specify hex values in multiples of 8 bits
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidHexValuePair), this->lastError.message);
-        return;
-      }
+      } 
 
       if (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R') {
         this->command.protocol = I2C_READ;
@@ -247,15 +171,6 @@ namespace TerminalCommander {
              (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R')) {
       this->command.protocol = USER_CALLBACK;
       this->pSerial->print(F("User Command\n"));
-    }
-    else {
-      writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-      return;
-    }
-
-    if ((this->command.length == 0) && (this->command.protocol != I2C_SCAN)) {
-      writeErrorMsgToSerialBuffer(this->lastError.set(CommandDataEmpty), this->lastError.message);
-      return;
     }
 
     switch (command.protocol) {
@@ -345,14 +260,22 @@ namespace TerminalCommander {
 
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
+        if (this->command.length != 0) {
+          writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+          return;
+        }
         this->scanTwoWireBus();
       }
       break;
 
       // Call user-defined functions for GPIO, configurations, reinitialization, etc.
       case USER_CALLBACK: {
-        const int8_t case_select = (int8_t)(this->getIntFromCharArray(this->command.data, (size_t)this->command.length));
+        if (this->command.length == 0) {
+          writeErrorMsgToSerialBuffer(this->lastError.set(UserCommandDataEmpty), this->lastError.message);
+          return;
+        }
 
+        const int8_t case_select = (int8_t)(this->getIntFromCharArray(this->command.data, (size_t)this->command.length));
         if (this->lastError.flag) {
           return;
         }
@@ -368,13 +291,110 @@ namespace TerminalCommander {
       }
       break;
 
-      default: { /** TODO: this can probably be removed */ } break;
+      default: {
+        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+      }
+      break;
     }
   }
 
   void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
     memset(message, '\0', TERM_CHAR_BUFFER_SIZE);
     strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
+  }
+
+  bool TerminalCommander::isRxBufferDataValid(void) {
+    // check validity of input command characters before parsing commands
+    uint16_t idx;
+    for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
+      // check input serial buffer is only alpha-numeric characters
+      if (((uint8_t)this->command.serialRx[idx] > 96) && ((uint8_t)this->command.serialRx[idx] < 122)) {
+        // these are lower-case letters [a-z]
+      }
+      else if (((uint8_t)this->command.serialRx[idx] > 47) && ((uint8_t)this->command.serialRx[idx] < 58)) {
+        // these are numbers [0-9]
+      }
+      else if (((uint8_t)this->command.serialRx[idx] > 64) && ((uint8_t)this->command.serialRx[idx] < 91)) {
+        // these are upper-case letters [A-Z]
+      }
+      else if ((uint8_t)this->command.serialRx[idx] == 45) {
+        // this is the '-' symbol which could be indicating a negative value
+      }
+      else if ((uint8_t)this->command.serialRx[idx] == 46) {
+        // this is the '.' symbol which could be indicating a decimal value
+      }
+      else if ((uint8_t)this->command.serialRx[idx] == 44) {
+        // this is the ',' symbol which could be indicating separated values
+      }
+      else if (((uint8_t)this->command.serialRx[idx] == 10) || 
+              ((uint8_t)this->command.serialRx[idx] == 13) ||  
+              ((uint8_t)this->command.serialRx[idx] == 32)) {
+        // this is a space character which could be indicating separated parameters
+      }
+      else if (this->command.serialRx[idx] == '\0') {
+        // end of serial input data has been reached
+        break;
+      }
+      else {
+        // an input buffer value was unrecognized
+        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
+        return false;
+      }
+    }
+
+    if (idx == 0) {
+      // input serial buffer is empty
+      writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      return false;
+    }
+
+    return true;
+  }
+
+  bool TerminalCommander::parseTwoWireData(void) {
+    // TwoWire commands require more strict validation and parsing
+    uint16_t idx;
+    for (idx = 0; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
+      if (this->command.data[idx] == '\0') {
+        // end of serial input data has been reached
+        break;
+      }
+      else {
+        this->command.twowire[idx] = (uint8_t)this->command.data[idx];
+      }
+
+      if ((this->command.twowire[idx] > 96) && (this->command.twowire[idx] < 103)) {
+        // check for lower-case letters [a-f] and convert to upper-case
+        this->command.twowire[idx] -= 32;
+      }
+
+      if ((this->command.twowire[idx] > 47) && (this->command.twowire[idx] < 58)) {
+        // check for numbers [0-9] and convert ASCII value to numeric
+        this->command.twowire[idx] -= 48;
+      }
+      else if ((this->command.twowire[idx] > 64) && (this->command.twowire[idx] < 71)) {
+          // check for upper-case letters [A-F] and convert ASCII to numeric
+          this->command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
+      }
+      else {
+        // an command character is invalid or unrecognized
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCharacter), this->lastError.message);
+        return false;
+      }
+    }
+
+    if (idx < 3) {
+      // command buffer is empty
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCmdLength), this->lastError.message);
+      return false;
+    }
+    else if ((idx >> 1) != ((idx + 1) >> 1)) {
+      // command buffer does not specify hex values in multiples of 8 bits
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidHexValuePair), this->lastError.message);
+      return false;
+    }
+
+    return true;
   }
 
   void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {
