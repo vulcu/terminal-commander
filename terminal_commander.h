@@ -285,7 +285,7 @@
         /*! @brief  Add callback function for specific command.
         *
         * @details Usage:
-        *          attachUserFcn([](uint8_t command){
+        *          onUserCommand([](uint8_t command){
         *              // do things
         *          });
         */
@@ -321,9 +321,18 @@
         * @details Detailed description here.
         * 
         * @param   param    Description of the input parameter
-        * @returns uint32_t numeric value represented by input char array
+        * @returns void
         */
-        //void checkCommandCharacterValidity(void) 
+        void printTwoWireAddress(uint8_t i2c_address);
+
+        /*! @brief  Return the integer represented by a character array
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @returns void
+        */
+        void printTwoWireRegister(uint8_t i2c_register);
 
         /*! @brief  Error-check the incoming ASCII command string
         *

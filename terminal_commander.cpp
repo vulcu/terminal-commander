@@ -260,28 +260,15 @@ namespace TerminalCommander {
 
     switch (command.protocol) {
       case I2C_READ: {
-        /// TODO: move this to TWI parsing section
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
+        this->printTwoWireAddress(i2c_address);
         const uint8_t i2c_register =
           (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
-        uint8_t twi_read_index = 4;
+        this->printTwoWireRegister(i2c_register);
         
-        if (i2c_address < 0x10) {
-          this->pSerial->print(F("Address: 0x0"));
-        }
-        else {
-          this->pSerial->print(F("Address: 0x"));
-        }
-        this->pSerial->println(i2c_address, HEX);
-
-        if (i2c_register < 0x10) {
-          this->pSerial->print(F("Register: 0x0"));
-        }
-        else {
-          this->pSerial->print(F("Register: 0x"));
-        }
-        this->pSerial->println(i2c_register, HEX);
+        uint8_t twi_read_index = 0;   // start at zero so we can use the entire buffer for read
+        this->command.flushTwoWire(); // flush the existing twowire buffer of all data
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
@@ -323,27 +310,12 @@ namespace TerminalCommander {
       break;
 
       case I2C_WRITE: {
-        /// TODO: move this to TWI parsing section
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
+        this->printTwoWireAddress(i2c_address);
         const uint8_t i2c_register =
           (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
-
-        if (i2c_address < 0x10) {
-          this->pSerial->print(F("Address: 0x0"));
-        }
-        else {
-          this->pSerial->print(F("Address: 0x"));
-        }
-        this->pSerial->println(i2c_address, HEX);
-
-        if (i2c_register < 0x10) {
-          this->pSerial->print(F("Register: 0x0"));
-        }
-        else {
-          this->pSerial->print(F("Register: 0x"));
-        }
-        this->pSerial->println(i2c_register, HEX);
+        this->printTwoWireRegister(i2c_register);
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
@@ -403,6 +375,26 @@ namespace TerminalCommander {
   void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
     memset(message, '\0', TERM_CHAR_BUFFER_SIZE);
     strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
+  }
+
+  void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {
+    if (i2c_address < 0x10) {
+      this->pSerial->print(F("Address: 0x0"));
+    }
+    else {
+      this->pSerial->print(F("Address: 0x"));
+    }
+    this->pSerial->println(i2c_address, HEX);
+  }
+
+  void TerminalCommander::printTwoWireRegister(uint8_t i2c_register) {
+    if (i2c_register < 0x10) {
+      this->pSerial->print(F("Register: 0x0"));
+    }
+    else {
+      this->pSerial->print(F("Register: 0x"));
+    }
+    this->pSerial->println(i2c_register, HEX);
   }
 
   /// TODO: fix handling of negative numbers because it's currently broken
