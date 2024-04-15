@@ -7,6 +7,24 @@
 
 #include "terminal_commander.h"
 
+static int strcmp(const char *s1, const char *s2) {
+    const unsigned char *p1 = (const unsigned char *)s1;
+    const unsigned char *p2 = (const unsigned char *)s2;
+
+    while (*p1 != '\0') {
+        if (*p2 == '\0') return  1;
+        if (*p2 > *p1)   return -1;
+        if (*p1 > *p2)   return  1;
+
+        p1++;
+        p2++;
+    }
+
+    if (*p2 != '\0') return -1;
+
+    return 0;
+}
+
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
@@ -104,8 +122,60 @@ namespace TerminalCommander {
     }
   }
 
-  void TerminalCommander::onUserCommand(user_callback_t callback) {
-    this->userCallbackFn = callback;
+  void TerminalCommander::onCommand(const char* command, user_callback_char_fn_t callback) {
+    this->userCharCallbacks[this->numUserCharCallbacks] = { command, callback };
+    this->numUserCharCallbacks++;
+  }
+
+  /// TODO: fix handling of negative numbers because it's currently broken
+  /// TODO: fix handling of numbers greater than 69999
+  int16_t TerminalCommander::getIntFromCharArray(const char *char_array, uint8_t start, size_t array_size) {
+    bool is_negative = false;
+    bool is_fractional = false;
+    int16_t numeric_value = 0;
+
+    for (uint8_t k = 0; k < array_size; k++) {
+      if (char_array[k] == 46) {
+        is_fractional = true;
+        array_size = k;
+      }
+    }
+
+    for (uint8_t k = start; k < array_size; k++) {
+      if (char_array[k] == 45) {
+        if (k != 0) {
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(NumericFormat), this->lastError.message);
+          return 0;
+        }
+        is_negative = true;
+        k += 1;
+      }
+      else if (!((char_array[k] > 47) && (char_array[k] < 58))) {
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(NonNumeric), this->lastError.message);
+        return 0;
+      }
+      else {
+        // math library uses a lot of program space so don't use pow() here
+        uint16_t order_of_mag = power_uint8(10, (array_size - (k + 1)));
+
+        /// TODO: Since always multiplying by power of 10 might not need call to power_uint8()
+        numeric_value += ((char_array[k] - 48) * order_of_mag);
+      }
+    }
+
+    /// TODO: Test if this is actually used when number is negative?
+    if (is_negative) {
+      numeric_value *= -1;
+    }
+
+    if (is_fractional) {
+      // Input data value was not an integer
+      this->pSerial->println(F("Warning: Only integer data values are accepted"));
+      this->pSerial->print(F("Requested value rounded towards zero, new value is "));
+      this->pSerial->println(numeric_value);
+    }
+
+    return numeric_value;
   }
 
   /// TODO: break this up into smaller methods
@@ -147,7 +217,6 @@ namespace TerminalCommander {
 
       if (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R') {
         this->command.protocol = I2C_READ;
-        this->pSerial->print(F("I2C Read\n"));
         if (this->command.length < 4) {
           this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireReadRegister), this->lastError.message);
           return;
@@ -155,7 +224,6 @@ namespace TerminalCommander {
       }
       else if (this->command.prefix[3] == 'w' || this->command.prefix[3] == 'W') {
         this->command.protocol = I2C_WRITE;
-        this->pSerial->print(F("I2C Write\n"));
       }
     }
     else if ((this->command.prefix[0] == 's' || this->command.prefix[0] == 'S') &&
@@ -163,18 +231,11 @@ namespace TerminalCommander {
              (this->command.prefix[2] == 'a' || this->command.prefix[2] == 'A') &&
              (this->command.prefix[3] == 'n' || this->command.prefix[3] == 'N')) {
       this->command.protocol = I2C_SCAN;
-      this->pSerial->print(F("Scan I2C Bus for Available Devices\n"));
-    }
-    else if ((this->command.prefix[0] == 'u' || this->command.prefix[0] == 'U') &&
-             (this->command.prefix[1] == 's' || this->command.prefix[1] == 'S') &&
-             (this->command.prefix[2] == 'e' || this->command.prefix[2] == 'E') &&
-             (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R')) {
-      this->command.protocol = USER_CALLBACK;
-      this->pSerial->print(F("User Command\n"));
     }
 
     switch (command.protocol) {
       case I2C_READ: {
+        this->pSerial->print(F("I2C Read\n"));
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         this->printTwoWireAddress(i2c_address);
@@ -189,7 +250,7 @@ namespace TerminalCommander {
         this->pWire->write(i2c_register);
         twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
         if (error == NACK_ADDRESS) {
-          this->pSerial->print(F("Error: I2C read attempt recieved NACK"));
+          this->pSerial->println(F("Error: I2C read attempt recieved NACK"));
           return;
         }
         delayMicroseconds(50);
@@ -225,6 +286,7 @@ namespace TerminalCommander {
       break;
 
       case I2C_WRITE: {
+        this->pSerial->print(F("I2C Write\n"));
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         this->printTwoWireAddress(i2c_address);
@@ -239,7 +301,7 @@ namespace TerminalCommander {
         }
         twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
         if (error == NACK_ADDRESS) {
-          this->pSerial->print(F("Error: I2C write attempt recieved NACK"));
+          this->pSerial->println(F("Error: I2C write attempt recieved NACK"));
           return;
         }
         else {
@@ -264,34 +326,22 @@ namespace TerminalCommander {
           writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
+
+        this->pSerial->print(F("Scan I2C Bus for Available Devices\n"));
         this->scanTwoWireBus();
       }
       break;
 
-      // Call user-defined functions for GPIO, configurations, reinitialization, etc.
-      case USER_CALLBACK: {
-        if (this->command.length == 0) {
-          writeErrorMsgToSerialBuffer(this->lastError.set(UserCommandDataEmpty), this->lastError.message);
-          return;
-        }
-
-        const int8_t case_select = (int8_t)(this->getIntFromCharArray(this->command.data, (size_t)this->command.length));
-        if (this->lastError.flag) {
-          return;
-        }
-
-        if (this->userCallbackFn != nullptr) {
-          /// TODO: modify this to pass a pointer to command.data and the size_t of command.data
-          this->userCallbackFn(case_select);
-        }
-        else {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(UndefinedUserFunctionPtr), this->lastError.message);
-          return;
-        }
-      }
-      break;
-
       default: {
+        // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+        for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+          if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
+            this->userCharCallbacks[k].callback(this->command.serialRx, sizeof(this->command.serialRx));
+            return;
+          }
+        }
+
+        // no terminal commander or user-defined command was identified
         writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       }
       break;
@@ -415,56 +465,6 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
-  }
-
-  /// TODO: fix handling of negative numbers because it's currently broken
-  int16_t TerminalCommander::getIntFromCharArray(const char *char_array, size_t array_size) {
-    bool is_negative = false;
-    bool is_fractional = false;
-    int16_t numeric_value = 0;
-
-    for (uint8_t k = 0; k < array_size; k++) {
-      if (char_array[k] == 46) {
-        is_fractional = true;
-        array_size = k;
-      }
-    }
-
-    for (uint8_t k = 0; k < array_size; k++) {
-      if (char_array[k] == 45) {
-        if (k != 0) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(NumericFormat), this->lastError.message);
-          return 0;
-        }
-        is_negative = true;
-        k += 1;
-      }
-      else if (!((char_array[k] > 47) && (char_array[k] < 58))) {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(NonNumeric), this->lastError.message);
-        return 0;
-      }
-      else {
-        // math library uses a lot of program space so don't use pow() here
-        uint16_t order_of_mag = power_uint8(10, (array_size - (k + 1)));
-
-        /// TODO: Since always multiplying by power of 10 might not need call to power_uint8()
-        numeric_value += ((char_array[k] - 48) * order_of_mag);
-      }
-    }
-
-    /// TODO: Test if this is actually used when number is negative?
-    if (is_negative) {
-      numeric_value *= -1;
-    }
-
-    if (is_fractional) {
-      // Input data value was not an integer
-      this->pSerial->println(F("Warning: Only integer data values are accepted"));
-      this->pSerial->print(F("Requested value rounded towards zero, new value is "));
-      this->pSerial->println(numeric_value);
-    }
-
-    return numeric_value;
   }
 
   uint16_t TerminalCommander::power_uint8(const uint8_t base, const uint8_t exponent) {

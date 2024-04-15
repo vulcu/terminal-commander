@@ -15,9 +15,12 @@
   #define TERM_LINE_ENDING          ('\n')
 
   // UART TERM console input, I2C, and 'error' buffer sizes
-  #define TERM_CHAR_BUFFER_SIZE    (64U)  // total length in bytes
-  #define TERM_COMMAND_PREFIX_SIZE ( 4U)  // command prefix ('i2cw', 'gpio', etc)
-  #define TERM_TWOWIRE_BUFFER_SIZE (30U)  // TwoWire read/write buffer length
+  #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // total length in bytes
+  #define TERM_COMMAND_PREFIX_SIZE  (  4U)  // command prefix ('i2cw', 'gpio', etc)
+  #define TERM_TWOWIRE_BUFFER_SIZE  ( 30U)  // TwoWire read/write buffer length
+
+  // Maximum number of unique user-defined commands
+  #define MAX_USER_COMMANDS         ( 10U)
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
@@ -28,11 +31,26 @@
     #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
 
+  /**
+   * @brief Compares two null-terminated byte strings lexicographically.
+   *
+   * @details Returns:
+   *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
+   *                   the first not-matching character in s1 has a greater 
+   *                   ASCII value than the corresponding character in s2.
+   *             Zero: If s1 and s2 compare equal.
+   *   Positive Value: If s1 appears after s2 in lexicographical order. 
+   *
+   * @param  s1  Null-terminated byte string.
+   * @param  s2  Null-terminated byte string.
+   * @return int 
+   */
+  int strcmp(const char *s1, const char *s2) __attribute__((weak));
+
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
-      // the following only works for lambda expressions that do NOT capture local variables
-      // e.g. [](){}
-      typedef void (*user_callback_t)(uint8_t);
+      // the following only works for lambda expressions that do NOT capture local variables, e.g. [](){}
+      typedef void (*user_callback_char_fn_t)(char*, size_t);
 
       // alt: the following works for lambda expressions that capture local variables
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
@@ -43,7 +61,7 @@
         I2C_READ, 
         I2C_WRITE, 
         I2C_SCAN, 
-        USER_CALLBACK,  
+        // USER_CALLBACK,  
       };
 
       typedef enum error_type_t {
@@ -83,6 +101,11 @@
        *
        * @details A more elaborate description of the constructor.
        */
+      typedef struct user_callback_char_t {
+        const char* command;
+        user_callback_char_fn_t callback; // could be pointer?
+      };
+
       typedef struct error_t {
         /** Fixed array for raw incoming serial rx data */
         bool flag;
@@ -285,14 +308,27 @@
         /*! @brief  Add callback function for specific command.
         *
         * @details Usage:
-        *          onUserCommand([](uint8_t command){
+        *          onCommand("YOUR COMMAND", [](char* args, size_t size){
         *              // do things
         *          });
         */
-        void onUserCommand(TerminalCommanderTypes::user_callback_t callback);
+        void onCommand(const char* command, TerminalCommanderTypes::user_callback_char_fn_t callback);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @param   param    Description of the input parameter
+        * @param   param    Description of the input parameter
+        * @returns int16_t Total valid character count of incoming buffer
+        */
+        int16_t getIntFromCharArray(const char *char_array, uint8_t start, size_t array_size);
 
       private:
-        TerminalCommanderTypes::user_callback_t userCallbackFn = nullptr;
+        TerminalCommanderTypes::user_callback_char_t userCharCallbacks[MAX_USER_COMMANDS] = {};
+        uint8_t numUserCharCallbacks = 0;
+
         TerminalCommanderTypes::error_t lastError;
         TerminalCommanderTypes::terminal_command_t command;
         Stream *pSerial;
@@ -351,16 +387,6 @@
         * @returns void
         */
         void printTwoWireRegister(uint8_t i2c_register);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        int16_t getIntFromCharArray(const char *char_array, size_t array_size);
 
         /*! @brief  Error-check the incoming ASCII command string
         *
