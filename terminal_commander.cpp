@@ -336,7 +336,17 @@ namespace TerminalCommander {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
         for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
           if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
-            this->userCharCallbacks[k].callback(this->command.serialRx, sizeof(this->command.serialRx));
+            // const char*  args = this->command.serialRx;
+            // const unsigned char *p = (const unsigned char *)this->userCharCallbacks[k].command;
+            // uint8_t args_index = 0;
+            // while (*p != '\0') {
+            //   p++;
+            //   args++;
+            //   args_index++;
+            // }
+            // const size_t size = sizeof(this->command.serialRx) - args_index;
+            // this->userCharCallbacks[k].callback(args, size);
+            this->userCharCallbacks[k].callback(this->command.serialRx, this->userCharCallbacks[k].command);
             return;
           }
         }
