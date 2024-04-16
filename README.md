@@ -15,23 +15,8 @@ Command-based terminal interface for Arduino
 
 TerminalCommander::TerminalCommander Terminal(&Serial, &Wire);
 
-void exec_commands(uint8_t cmd) {
-    switch (cmd) {
-        case 0: {
-        Serial.println("EXEC Case 0");
-        }
-        break;
-
-        case 1: {
-        Serial.println("EXEC Case 1");
-        }
-        break;
-
-        default: {
-        Serial.println("EXEC Default Case");
-        }
-        break;
-    }
+void my_function(char* args, size_t size) {
+    // your code goes here
 }
 
 void setup() {
@@ -43,28 +28,15 @@ void setup() {
     Wire.begin();
     Wire.setClock(I2C_CLK_RATE);
 
-    // Option1: using a lambda expression that matches type TerminalCommander::cmd_callback_t
-    Terminal.onGpio([](uint8_t cmd) {
-        switch (cmd) {
-        case 0: {
-            Serial.println("GPIO Case 0");
-        }
-        break;
-        case 1: {
-            Serial.println("GPIO Case 1");
-        }
-        break;
-        default: {
-            Serial.println("GPIO Default Case");
-        }
-        break;
-        }
+    // Option1: using a lambda expression that matches 
+    // type TerminalCommander::user_callback_char_fn_t
+    Terminal.onCommand("My Command", [](char* args, size_t size) {
+        // your code goes here
     });
 
-    // Option2: using a pointer to a function that matches type TerminalCommander::cmd_callback_t
-    Terminal.onExec(&exec_commands);
-
-    // remaining board configuration code goes here
+    // Option2: using a pointer to a function that matches
+    // type TerminalCommander::user_callback_char_fn_t
+    Terminal.onExec(&my_function);
 }
 
 void loop() {
