@@ -266,11 +266,11 @@ namespace TerminalCommander {
         }
 
         this->pSerial->print(F("Read Data:"));
-        if (twi_read_index == 4) {
+        if (twi_read_index == 0) {
           this->pSerial->print(F(" No Data Received"));
         }
         else {
-          for(uint8_t k = 4; k < twi_read_index; k++) {
+          for(uint8_t k = 0; k < twi_read_index; k++) {
             if (this->command.twowire[k] < 0x10) {
               this->pSerial->print(F(" 0x0"));
             }
@@ -307,13 +307,14 @@ namespace TerminalCommander {
         else {
           this->pSerial->print(F("Write Data:"));
           for(uint8_t k = 4; k < this->command.length; k += 2) {
-            if (this->command.twowire[k] < 0x01) {
+            uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
+            if (write_data < 0x01) {
               this->pSerial->print(F(" 0x0"));
             }
             else {
               this->pSerial->print(F(" 0x"));
             }
-            this->pSerial->print((16 * this->command.twowire[k]) + this->command.twowire[k+1], HEX);
+            this->pSerial->print(write_data, HEX);
           }
           this->pSerial->print('\n');
         }
