@@ -127,63 +127,16 @@ namespace TerminalCommander {
     this->numUserCharCallbacks++;
   }
 
-  /// TODO: fix handling of negative numbers because it's currently broken
-  /// TODO: fix handling of numbers greater than 69999
-  int16_t TerminalCommander::getIntFromCharArray(const char *char_array, uint8_t start, size_t array_size) {
-    bool is_negative = false;
-    bool is_fractional = false;
-    int16_t numeric_value = 0;
-
-    for (uint8_t k = 0; k < array_size; k++) {
-      if (char_array[k] == 46) {
-        is_fractional = true;
-        array_size = k;
-      }
-    }
-
-    for (uint8_t k = start; k < array_size; k++) {
-      if (char_array[k] == 45) {
-        if (k != 0) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(NumericFormat), this->lastError.message);
-          return 0;
-        }
-        is_negative = true;
-        k += 1;
-      }
-      else if (!((char_array[k] > 47) && (char_array[k] < 58))) {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(NonNumeric), this->lastError.message);
-        return 0;
-      }
-      else {
-        // math library uses a lot of program space so don't use pow() here
-        uint16_t order_of_mag = power_uint8(10, (array_size - (k + 1)));
-
-        /// TODO: Since always multiplying by power of 10 might not need call to power_uint8()
-        numeric_value += ((char_array[k] - 48) * order_of_mag);
-      }
-    }
-
-    /// TODO: Test if this is actually used when number is negative?
-    if (is_negative) {
-      numeric_value *= -1;
-    }
-
-    if (is_fractional) {
-      // Input data value was not an integer
-      this->pSerial->println(F("Warning: Only integer data values are accepted"));
-      this->pSerial->print(F("Requested value rounded towards zero, new value is "));
-      this->pSerial->println(numeric_value);
-    }
-
-    return numeric_value;
-  }
-
   /// TODO: break this up into smaller methods
   void TerminalCommander::serialCommandProcessor(void) {
     if (!this->isRxBufferDataValid()) {
       return;
     }    
 
+    /** TODO: Change design to combine 'prefix' and 'command' into single command buffer.
+     *        Save the location of the first space and use this as a delimiter for custom
+     *        user commands to enable passing arguments to user functions.
+    */
     // remove spaces from incoming serial command then separate into 'prefix' and 'command'
     uint8_t data_index = 0;
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
@@ -476,22 +429,6 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
-  }
-
-  uint16_t TerminalCommander::power_uint8(const uint8_t base, const uint8_t exponent) {
-    if (exponent == 0) {
-      return (uint16_t)1;
-    }
-    else if (exponent == 1) {
-      return (uint16_t)base;
-    }
-    else {
-      uint16_t output = base;
-      for (uint8_t k = 1; k < exponent; k++) {
-        output *= base;
-      }
-      return output;
-    }
   }
 
   void TerminalCommander::scanTwoWireBus(void) {

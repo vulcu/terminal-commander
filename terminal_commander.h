@@ -314,17 +314,6 @@
         */
         void onCommand(const char* command, TerminalCommanderTypes::user_callback_char_fn_t callback);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns int16_t Total valid character count of incoming buffer
-        */
-        int16_t getIntFromCharArray(const char *char_array, uint8_t start, size_t array_size);
-
       private:
         TerminalCommanderTypes::user_callback_char_t userCharCallbacks[MAX_USER_COMMANDS] = {};
         uint8_t numUserCharCallbacks = 0;
@@ -387,16 +376,6 @@
         * @returns void
         */
         void printTwoWireRegister(uint8_t i2c_register);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        uint16_t power_uint8(uint8_t base, uint8_t exponent);
 
         /*! @brief  Error-check the incoming ASCII command string
         *
