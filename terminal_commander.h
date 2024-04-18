@@ -31,22 +31,6 @@
     #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
 
-  /**
-   * @brief Compares two null-terminated byte strings lexicographically.
-   *
-   * @details Returns:
-   *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
-   *                   the first not-matching character in s1 has a greater 
-   *                   ASCII value than the corresponding character in s2.
-   *             Zero: If s1 and s2 compare equal.
-   *   Positive Value: If s1 appears after s2 in lexicographical order. 
-   *
-   * @param  s1  Null-terminated byte string.
-   * @param  s2  Null-terminated byte string.
-   * @return int 
-   */
-  int strcmp(const char *s1, const char *s2) __attribute__((weak));
-
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
       // the following only works for lambda expressions that do NOT capture local variables, e.g. [](){}
@@ -56,7 +40,7 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
-      typedef enum terminal_protocols_t {
+      enum terminal_protocols_t {
         INVALID = 0,
         I2C_READ, 
         I2C_WRITE, 
@@ -64,7 +48,7 @@
         // USER_CALLBACK,  
       };
 
-      typedef enum error_type_t {
+      enum error_type_t {
         NoError = 0,
         UndefinedUserFunctionPtr,
         NoInput, 
@@ -87,7 +71,7 @@
         WriteProtectedLock,
       };
 
-      typedef enum twi_error_type_t {
+      enum twi_error_type_t {
         NO_ERROR = 0,
         TX_BUFFER_OVERFLOW, 
         NACK_ADDRESS, 
@@ -101,12 +85,12 @@
        *
        * @details A more elaborate description of the constructor.
        */
-      typedef struct user_callback_char_t {
+      struct user_callback_char_t {
         const char* command;
         user_callback_char_fn_t callback; // could be pointer?
       };
 
-      typedef struct error_t {
+      struct error_t {
         /** Fixed array for raw incoming serial rx data */
         bool flag;
 
@@ -169,7 +153,7 @@
        *
        * @details A more elaborate description of the constructor.
        */
-      typedef struct terminal_command_t {
+      struct terminal_command_t {
         /** Fixed array for raw incoming serial rx data */
         char serialRx[TERM_CHAR_BUFFER_SIZE] = {'\0'};
 
@@ -337,15 +321,6 @@
         * @details Detailed description here.
         * 
         * @param   param Description of the input parameter
-        * @returns void
-        */
-        void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
         * @returns bool  True if buffer is not empty and all characters are allowed
         */
         bool isRxBufferDataValid(void);
@@ -386,6 +361,31 @@
         * @returns uint16_t Total valid character count of incoming buffer
         */
         void scanTwoWireBus(void);
+
+        /**
+         * @brief Compares two null-terminated byte strings lexicographically.
+         *
+         * @details Returns:
+         *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
+         *                   the first not-matching character in s1 has a greater 
+         *                   ASCII value than the corresponding character in s2.
+         *             Zero: If s1 and s2 compare equal.
+         *   Positive Value: If s1 appears after s2 in lexicographical order. 
+         *
+         * @param  s1  Null-terminated byte string.
+         * @param  s2  Null-terminated byte string.
+         * @return int 
+         */
+        int16_t strcmp(const char *s1, const char *s2);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param Description of the input parameter
+        * @returns void
+        */
+        void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
     };
   }
 #endif

@@ -7,24 +7,6 @@
 
 #include "terminal_commander.h"
 
-static int strcmp(const char *s1, const char *s2) {
-    const unsigned char *p1 = (const unsigned char *)s1;
-    const unsigned char *p2 = (const unsigned char *)s2;
-
-    while (*p1 != '\0') {
-        if (*p2 == '\0') return  1;
-        if (*p2 > *p1)   return -1;
-        if (*p1 > *p2)   return  1;
-
-        p1++;
-        p2++;
-    }
-
-    if (*p2 != '\0') return -1;
-
-    return 0;
-}
-
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
@@ -289,7 +271,7 @@ namespace TerminalCommander {
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
         for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-          if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
+          if (this->strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
             // const char*  args = this->command.serialRx;
             // const unsigned char *p = (const unsigned char *)this->userCharCallbacks[k].command;
             // uint8_t args_index = 0;
@@ -300,7 +282,7 @@ namespace TerminalCommander {
             // }
             // const size_t size = sizeof(this->command.serialRx) - args_index;
             // this->userCharCallbacks[k].callback(args, size);
-            this->userCharCallbacks[k].callback(this->command.serialRx, this->userCharCallbacks[k].command);
+            this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
             return;
           }
         }
@@ -310,11 +292,6 @@ namespace TerminalCommander {
       }
       break;
     }
-  }
-
-  void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
-    memset(message, '\0', TERM_CHAR_BUFFER_SIZE);
-    strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
   }
 
   bool TerminalCommander::isRxBufferDataValid(void) {
@@ -469,5 +446,28 @@ namespace TerminalCommander {
       pSerial->print(device_count);
       pSerial->println(F(" devices found!"));
     }
+  }
+
+  int16_t TerminalCommander::strcmp(const char *s1, const char *s2) {
+    const unsigned char *p1 = (const unsigned char *)s1;
+    const unsigned char *p2 = (const unsigned char *)s2;
+
+    while (*p1 != '\0') {
+        if (*p2 == '\0') return  1;
+        if (*p2 > *p1)   return -1;
+        if (*p1 > *p2)   return  1;
+
+        p1++;
+        p2++;
+    }
+
+    if (*p2 != '\0') return -1;
+
+    return 0;
+  }
+
+  void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
+    memset(message, '\0', TERM_CHAR_BUFFER_SIZE);
+    strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
   }
 }
