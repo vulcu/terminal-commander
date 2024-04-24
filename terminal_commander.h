@@ -23,8 +23,6 @@
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
-  #elif (TERM_COMMAND_PREFIX_SIZE != 4U)
-    #error "Command prefix sizes other than 4 characters are unsupported"
   #elif (TERM_TWOWIRE_BUFFER_SIZE > 34U)
     // '34' since this buffer size includes address and register bytes
     #warning "Wire library does not support transactions exceeding 32 bytes"
@@ -56,11 +54,10 @@
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
       enum terminal_protocols_t {
-        INVALID = 0,
+        UNDEFINED = 0,
         I2C_READ, 
         I2C_WRITE, 
         I2C_SCAN, 
-        // USER_CALLBACK,  
       };
 
       enum error_type_t {
@@ -174,11 +171,14 @@
         /** Protocol type identified for  */
         terminal_protocols_t protocol;
 
-        /** Pointer to first non-space character following a space in the command cstring */
+        /** Pointer to first non-space character following a space char in the incoming buffer */
         char *pArgs;
 
-        /** Total length in char and without spaces of arguments following command*/
-        uint8_t length;
+        /** Total length in char of buffer preceding first space character*/
+        uint8_t lengthCmd;
+
+        /** Total length in char and without spaces of buffer following first space character*/
+        uint8_t lengthArgs;
 
         /** Index of current character in incomming serial rx data array */
         uint16_t index;
@@ -198,7 +198,13 @@
          * @returns Description of the returned parameter
          */
         terminal_command_t() :
-          protocol(INVALID), args(nullptr), length(0U), index(0U), complete(false), overflow(false) {}
+          protocol(UNDEFINED), 
+          pArgs(nullptr), 
+          lengthCmd(0U), 
+          lengthArgs(0U), 
+          index(0U), 
+          complete(false), 
+          overflow(false) {}
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -257,11 +263,13 @@
          * @returns void
          */
         void initialize(void) {
+          this->protocol    = UNDEFINED;
+          this->pArgs       = nullptr;
+          this->lengthCmd   = 0U;
+          this->lengthArgs  = 0U;
+          this->index       = 0U;
           this->flushTwoWire();
           memset(this->data, '\0', sizeof(this->data));
-          this->protocol = INVALID;
-          this->index    = 0U;
-          this->length   = 0U;
         }
 
         /**

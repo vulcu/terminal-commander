@@ -132,20 +132,23 @@ namespace TerminalCommander {
           ((uint8_t)this->command.serialRx[serialrx_index] != 32)) {
         if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
+          if (this->command.lengthCmd == 0) {
+            this->command.lengthCmd = data_index;
+          }
           break;
         }
         else {
           this->command.data[data_index] = this->command.serialRx[serialrx_index];
-
-          // store pointer to 1st non-space char after 1st space (if any) to enable passing user args
-          if (this->command.pArgs == nullptr) {
-            this->command.pArgs = &this->command.data[data_index];
-          }
         }
         data_index++;
       }
+      else if ((this->command.pArgs == nullptr) && (data_index != 0)) {
+        // store pointer to 1st non-space char after 1st space (if any) to enable passing user args
+        this->command.pArgs = &this->command.data[data_index];
+        this->command.lengthCmd = data_index;
+      }
     }
-    this->command.length = data_index;
+    this->command.lengthArgs = data_index - this->command.lengthCmd;
 
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
         (this->command.data[1] == '2' || this->command.data[1] == '@') &&
@@ -154,17 +157,27 @@ namespace TerminalCommander {
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
         return;
-      } 
+      }
+
+      // if command was sent without spaces then set correct length for command and args
+      if (this->command.lengthCmd == 0) {
+        this->command.lengthCmd = 4U;
+        this->command.lengthArgs = data_index - 4U;
+      }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
         this->command.protocol = I2C_READ;
-        if (this->command.length < 4) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireReadRegister), this->lastError.message);
-          return;
-        }
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
+        if (command.lengthArgs < 6U) {
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
+          return;
+        }
         this->command.protocol = I2C_WRITE;
+      }
+      else {
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+        return;
       }
     }
     else if ((this->command.data[0] == 's' || this->command.data[0] == 'S') &&
@@ -195,7 +208,7 @@ namespace TerminalCommander {
           return;
         }
         delayMicroseconds(50);
-        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.length >> 1) - 1));
+        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.lengthArgs >> 1) - 1));
         delayMicroseconds(50);
         while(this->pWire->available()) {
             if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
@@ -237,7 +250,7 @@ namespace TerminalCommander {
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
-        for (uint8_t k = 4; k < this->command.length; k += 2) {
+        for (uint8_t k = 4; k < this->command.lengthArgs; k += 2) {
           this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
         }
         twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
@@ -247,7 +260,7 @@ namespace TerminalCommander {
         }
         else {
           this->pSerial->print(F("Write Data:"));
-          for(uint8_t k = 4; k < this->command.length; k += 2) {
+          for(uint8_t k = 4; k < this->command.lengthArgs; k += 2) {
             uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
             if (write_data < 0x01) {
               this->pSerial->print(F(" 0x0"));
@@ -264,7 +277,7 @@ namespace TerminalCommander {
 
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
-        if (this->command.length != 0) {
+        if (this->command.lengthArgs != 0) {
           writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
@@ -276,7 +289,7 @@ namespace TerminalCommander {
 
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-        for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+          for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
           if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
             // const char*  args = this->command.serialRx;
             // const unsigned char *p = (const unsigned char *)this->userCharCallbacks[k].command;
@@ -288,8 +301,8 @@ namespace TerminalCommander {
             // }
             // const size_t size = sizeof(this->command.serialRx) - args_index;
             // this->userCharCallbacks[k].callback(args, size);
-            this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
-            return;
+              this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
+              return;
           }
         }
 
