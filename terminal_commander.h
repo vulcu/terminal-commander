@@ -16,7 +16,6 @@
 
   // UART TERM console input, I2C, and 'error' buffer sizes
   #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // total length in bytes
-  #define TERM_COMMAND_PREFIX_SIZE  (  4U)  // command prefix ('i2cw', 'gpio', etc)
   #define TERM_TWOWIRE_BUFFER_SIZE  ( 30U)  // TwoWire read/write buffer length
 
   // Maximum number of unique user-defined commands
@@ -173,11 +172,8 @@
         /** Fixed array for raw incoming serial rx data */
         char serialRx[TERM_CHAR_BUFFER_SIZE] = {'\0'};
 
-        /** Fixed array for holding the prefix of the received command */
-        char prefix[TERM_COMMAND_PREFIX_SIZE] = {'\0'};
-
         /** Fixed array for holding the received command data */
-        char data[TERM_CHAR_BUFFER_SIZE - TERM_COMMAND_PREFIX_SIZE] = {'\0'};
+        char data[TERM_CHAR_BUFFER_SIZE] = {'\0'};
 
         /** Fixed array for holding hex values to be sent/received via TwoWire/I2C */
         uint8_t twowire[TERM_TWOWIRE_BUFFER_SIZE] = {0};
@@ -185,7 +181,10 @@
         /** Protocol type identified for  */
         terminal_protocols_t protocol;
 
-        /** Total length in char of command after prefix and without spaces */
+        /** Pointer to first non-space character following a space in the command cstring */
+        char *pArgs;
+
+        /** Total length in char and without spaces of arguments following command*/
         uint8_t length;
 
         /** Index of current character in incomming serial rx data array */
@@ -206,7 +205,7 @@
          * @returns Description of the returned parameter
          */
         terminal_command_t() :
-          protocol(INVALID), length(0U), index(0U), complete(false), overflow(false) {}
+          protocol(INVALID), args(nullptr), length(0U), index(0U), complete(false), overflow(false) {}
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -266,7 +265,6 @@
          */
         void initialize(void) {
           this->flushTwoWire();
-          memset(this->prefix,  '\0', sizeof(this->prefix));
           memset(this->data, '\0', sizeof(this->data));
           this->protocol = INVALID;
           this->index    = 0U;

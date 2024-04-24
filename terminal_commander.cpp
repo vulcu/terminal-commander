@@ -137,7 +137,7 @@ namespace TerminalCommander {
      *        Save the location of the first space and use this as a delimiter for custom
      *        user commands to enable passing arguments to user functions.
     */
-    // remove spaces from incoming serial command then separate into 'prefix' and 'command'
+    // remove spaces from incoming serial command
     uint8_t data_index = 0;
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
       // remove whitespace from input character string
@@ -148,41 +148,43 @@ namespace TerminalCommander {
           // end of serial input data has been reached
           break;
         }
-        else if (data_index < TERM_COMMAND_PREFIX_SIZE) {
-          this->command.prefix[data_index] = this->command.serialRx[serialrx_index];
-        }
         else {
-          this->command.data[data_index - TERM_COMMAND_PREFIX_SIZE] = this->command.serialRx[serialrx_index];
+          this->command.data[data_index] = this->command.serialRx[serialrx_index];
+
+          // store pointer to 1st non-space char after 1st space (if any) to enable passing user args
+          if (this->command.pArgs == nullptr) {
+            this->command.pArgs = &this->command.data[data_index];
+          }
         }
         data_index++;
       }
     }
-    this->command.length = data_index - TERM_COMMAND_PREFIX_SIZE;
+    this->command.length = data_index;
 
-    if ((this->command.prefix[0] == 'i' || this->command.prefix[0] == 'I') &&
-        (this->command.prefix[1] == '2' || this->command.prefix[1] == '@') &&
-        (this->command.prefix[2] == 'c' || this->command.prefix[2] == 'C')) {
+    if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
+        (this->command.data[1] == '2' || this->command.data[1] == '@') &&
+        (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
 
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
         return;
       } 
 
-      if (this->command.prefix[3] == 'r' || this->command.prefix[3] == 'R') {
+      if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
         this->command.protocol = I2C_READ;
         if (this->command.length < 4) {
           this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireReadRegister), this->lastError.message);
           return;
         }
       }
-      else if (this->command.prefix[3] == 'w' || this->command.prefix[3] == 'W') {
+      else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
         this->command.protocol = I2C_WRITE;
       }
     }
-    else if ((this->command.prefix[0] == 's' || this->command.prefix[0] == 'S') &&
-             (this->command.prefix[1] == 'c' || this->command.prefix[1] == 'C') &&
-             (this->command.prefix[2] == 'a' || this->command.prefix[2] == 'A') &&
-             (this->command.prefix[3] == 'n' || this->command.prefix[3] == 'N')) {
+    else if ((this->command.data[0] == 's' || this->command.data[0] == 'S') &&
+             (this->command.data[1] == 'c' || this->command.data[1] == 'C') &&
+             (this->command.data[2] == 'a' || this->command.data[2] == 'A') &&
+             (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
       this->command.protocol = I2C_SCAN;
     }
 
@@ -362,8 +364,8 @@ namespace TerminalCommander {
 
   bool TerminalCommander::parseTwoWireData(void) {
     // TwoWire commands require more strict validation and parsing
-    uint16_t idx;
-    for (idx = 0; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
+    uint16_t idx = 4;
+    for ( ; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
       if (this->command.data[idx] == '\0') {
         // end of serial input data has been reached
         break;
@@ -392,7 +394,7 @@ namespace TerminalCommander {
       }
     }
 
-    if (idx < 3) {
+    if (idx < 7) {
       // command buffer is empty
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCmdLength), this->lastError.message);
       return false;
