@@ -65,25 +65,18 @@
 
       enum error_type_t {
         NoError = 0,
-        UndefinedUserFunctionPtr,
         NoInput, 
+        UndefinedUserFunctionPtr,
         UnrecognizedInput, 
         InvalidSerialCmdLength, 
+        IncomingTwoWireReadLength, 
         InvalidTwoWireCharacter, 
         InvalidTwoWireCmdLength, 
-        IncomingTwoWireReadLength, 
-        InvalidTwoWireReadRegister, 
+        InvalidTwoWireWriteData, 
         InvalidHexValuePair, 
         UnrecognizedProtocol, 
-        InvalidDeviceAddr,
-        UnrecognizedI2CRequest, 
-        UnrecognizedExecRequest, 
-        UnrecognizedGPIOSelection, 
-        UserCommandDataEmpty, 
-        NonNumeric, 
-        NumericFormat, 
-        PositiveIntVal,  
-        WriteProtectedLock,
+        UnrecognizedI2CTransType, 
+        UserArgumentDataMissing, 
       };
 
       enum twi_error_type_t {

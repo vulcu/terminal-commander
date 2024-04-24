@@ -30,48 +30,34 @@ namespace TerminalCommander {
 
   // put common error messages into Program memory to save SRAM space
   static const char strErrNoError[] PROGMEM = "No Error\n";
-  static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
   static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
+  static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
   static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
   static const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
+  static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
   static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
   static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
-  static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
-  static const char strErrInvalidTwoWireReadRegister[] PROGMEM = "Error: Invalid or Undefined TwoWire Read Register\n";
+  static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
   static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
   static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
-  static const char strErrInvalidDeviceAddr[] PROGMEM = "Request Error: Invalid device address\n";
-  static const char strErrUnrecognizedI2CRequest[] PROGMEM = "Error: Unrecognized I2C request\n";
-  static const char strErrUnrecognizedExecRequest[] PROGMEM = "Error: Unrecognized execution request\n";
-  static const char strErrUnrecognizedGPIOSelection[] PROGMEM = "Error: Unrecognized GPIO selection\n";
-  static const char strErrUserCommandDataEmpty[] PROGMEM = "Input Error: User command data is missing\n";
-  static const char strErrNonNumeric[] PROGMEM = "Input Error: Input value must be numeric\n";
-  static const char strErrNumericFormat[] PROGMEM = "Input Error: Unrecognized numeric formatting\n";
-  static const char strErrPositiveIntVal[] PROGMEM = "Input Error: Input value must be positive integer\n";
-  static const char strErrWriteProtectedLock[] PROGMEM = "Write Failed: Write-Protected Register Locked\n";
+  static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
+  static const char strErrUserArgumentDataMissing[] PROGMEM = "Input Error: User argument data is missing\n";
 
   static const char *const string_error_table[] PROGMEM = 
   {
     strErrNoError,
-    strErrUndefinedUserFunctionPtr, 
     strErrNoInput, 
+    strErrUndefinedUserFunctionPtr, 
     strErrUnrecognizedInput, 
     strErrInvalidSerialCmdLength, 
+    strErrIncomingTwoWireReadLength,
     strErrInvalidTwoWireCharacter, 
     strErrInvalidTwoWireCmdLength, 
-    strErrIncomingTwoWireReadLength,
-    strErrInvalidTwoWireReadRegister, 
+    strErrInvalidTwoWireWriteData, 
     strErrInvalidHexValuePair, 
     strErrUnrecognizedProtocol, 
-    strErrInvalidDeviceAddr, 
-    strErrUnrecognizedI2CRequest, 
-    strErrUnrecognizedExecRequest, 
-    strErrUnrecognizedGPIOSelection,
-    strErrUserCommandDataEmpty, 
-    strErrNonNumeric, 
-    strErrNumericFormat, 
-    strErrPositiveIntVal, 
-    strErrWriteProtectedLock
+    strErrUnrecognizedI2CTransType, 
+    strErrUserArgumentDataMissing 
   };
 
   TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
