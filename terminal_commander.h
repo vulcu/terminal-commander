@@ -174,13 +174,16 @@
         /** Pointer to first non-space character following a space char in the incoming buffer */
         char *pArgs;
 
+        /** Index of the serial buffer element pArgs points to */
+        uint8_t iArgs;
+
         /** Total length in char of buffer preceding first space character*/
         uint8_t lengthCmd;
 
         /** Total length in char and without spaces of buffer following first space character*/
         uint8_t lengthArgs;
 
-        /** Index of current character in incomming serial rx data array */
+        /** Index of current character in incoming serial rx data array */
         uint16_t index;
 
         /** True if the incoming serial data transfer is complete (newline was received) */
@@ -199,7 +202,8 @@
          */
         terminal_command_t() :
           protocol(UNDEFINED), 
-          pArgs(nullptr), 
+          pArgs(nullptr),
+          iArgs(0U), 
           lengthCmd(0U), 
           lengthArgs(0U), 
           index(0U), 
@@ -265,6 +269,7 @@
         void initialize(void) {
           this->protocol    = UNDEFINED;
           this->pArgs       = nullptr;
+          this->iArgs       = 0U;
           this->lengthCmd   = 0U;
           this->lengthArgs  = 0U;
           this->index       = 0U;

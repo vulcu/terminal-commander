@@ -119,10 +119,6 @@ namespace TerminalCommander {
       return;
     }    
 
-    /** TODO: Change design to combine 'prefix' and 'command' into single command buffer.
-     *        Save the location of the first space and use this as a delimiter for custom
-     *        user commands to enable passing arguments to user functions.
-    */
     // remove spaces from incoming serial command
     uint8_t data_index = 0;
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
@@ -144,7 +140,8 @@ namespace TerminalCommander {
       }
       else if ((this->command.pArgs == nullptr) && (data_index != 0)) {
         // store pointer to 1st non-space char after 1st space (if any) to enable passing user args
-        this->command.pArgs = &this->command.data[data_index];
+        this->command.pArgs = &this->command.data[serialrx_index];
+        this->command.iArgs = serialrx_index;
         this->command.lengthCmd = data_index;
       }
     }
@@ -289,20 +286,25 @@ namespace TerminalCommander {
 
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+        if (this->command.pArgs != nullptr) {
+          // char user_command[TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1]; 
+          // memcpy(&this->command.serialRx[this->command.pArgs + 1], user_command, (TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1));
+
+          // this->pSerial->println(user_command);
+
+          // for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+          //   if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
+          //     this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
+          //     return;
+          //   }
+          // }
+        }
+        else {
           for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-          if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
-            // const char*  args = this->command.serialRx;
-            // const unsigned char *p = (const unsigned char *)this->userCharCallbacks[k].command;
-            // uint8_t args_index = 0;
-            // while (*p != '\0') {
-            //   p++;
-            //   args++;
-            //   args_index++;
-            // }
-            // const size_t size = sizeof(this->command.serialRx) - args_index;
-            // this->userCharCallbacks[k].callback(args, size);
-              this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
+            if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
+              this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
               return;
+            }
           }
         }
 
