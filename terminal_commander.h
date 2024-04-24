@@ -31,6 +31,22 @@
     #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
 
+  /**
+   * @brief Compares two null-terminated byte strings lexicographically.
+   *
+   * @details Returns:
+   *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
+   *                   the first not-matching character in s1 has a greater 
+   *                   ASCII value than the corresponding character in s2.
+   *             Zero: If s1 and s2 compare equal.
+   *   Positive Value: If s1 appears after s2 in lexicographical order. 
+   *
+   * @param  s1  Null-terminated byte string.
+   * @param  s2  Null-terminated byte string.
+   * @return int 
+   */
+  int16_t strcmp(const char *s1, const char *s2) __attribute__((weak));
+
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
       // the following only works for lambda expressions that do NOT capture local variables, e.g. [](){}
@@ -361,22 +377,6 @@
         * @returns uint16_t Total valid character count of incoming buffer
         */
         void scanTwoWireBus(void);
-
-        /**
-         * @brief Compares two null-terminated byte strings lexicographically.
-         *
-         * @details Returns:
-         *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
-         *                   the first not-matching character in s1 has a greater 
-         *                   ASCII value than the corresponding character in s2.
-         *             Zero: If s1 and s2 compare equal.
-         *   Positive Value: If s1 appears after s2 in lexicographical order. 
-         *
-         * @param  s1  Null-terminated byte string.
-         * @param  s2  Null-terminated byte string.
-         * @return int 
-         */
-        int16_t strcmp(const char *s1, const char *s2);
 
         /*! @brief  Error-check the incoming ASCII command string
         *

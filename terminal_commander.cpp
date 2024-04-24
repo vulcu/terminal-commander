@@ -7,6 +7,24 @@
 
 #include "terminal_commander.h"
 
+int16_t strcmp(const char *s1, const char *s2) {
+  const unsigned char *p1 = (const unsigned char *)s1;
+  const unsigned char *p2 = (const unsigned char *)s2;
+
+  while (*p1 != '\0') {
+      if (*p2 == '\0') return  1;
+      if (*p2 > *p1)   return -1;
+      if (*p1 > *p2)   return  1;
+
+      p1++;
+      p2++;
+  }
+
+  if (*p2 != '\0') return -1;
+
+  return 0;
+}
+
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
@@ -271,7 +289,7 @@ namespace TerminalCommander {
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
         for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-          if (this->strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
+          if (strcmp(this->command.serialRx, this->userCharCallbacks[k].command) == 0) {
             // const char*  args = this->command.serialRx;
             // const unsigned char *p = (const unsigned char *)this->userCharCallbacks[k].command;
             // uint8_t args_index = 0;
@@ -446,24 +464,6 @@ namespace TerminalCommander {
       pSerial->print(device_count);
       pSerial->println(F(" devices found!"));
     }
-  }
-
-  int16_t TerminalCommander::strcmp(const char *s1, const char *s2) {
-    const unsigned char *p1 = (const unsigned char *)s1;
-    const unsigned char *p2 = (const unsigned char *)s2;
-
-    while (*p1 != '\0') {
-        if (*p2 == '\0') return  1;
-        if (*p2 > *p1)   return -1;
-        if (*p1 > *p2)   return  1;
-
-        p1++;
-        p2++;
-    }
-
-    if (*p2 != '\0') return -1;
-
-    return 0;
   }
 
   void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
