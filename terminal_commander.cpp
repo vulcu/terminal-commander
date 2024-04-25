@@ -296,6 +296,7 @@ namespace TerminalCommander {
               while (*this->command.pArgs != '\0'){
                 if (isSpace(this->command.pArgs[0])) {
                   this->command.pArgs++;
+                  this->command.iArgs++;
                 }
                 else {
                   break;
