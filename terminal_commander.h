@@ -15,8 +15,9 @@
   #define TERM_LINE_ENDING          ('\n')
 
   // UART TERM console input, I2C, and 'error' buffer sizes
-  #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // total length in bytes
+  #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // terminal buffer length in bytes
   #define TERM_TWOWIRE_BUFFER_SIZE  ( 30U)  // TwoWire read/write buffer length
+  #define TERM_ERROR_MESSAGE_SIZE   ( 64U)  // error message buffer length
 
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS         ( 10U)
@@ -106,7 +107,7 @@
         error_type_t type;
 
         /** Fixed array for raw incoming serial rx data */
-        char message[TERM_CHAR_BUFFER_SIZE] = {'\0'};
+        char message[TERM_ERROR_MESSAGE_SIZE + 1] = {'\0'};
 
         /** Fixed array for raw incoming serial rx data */
         error_t () : flag(false), warning(false), type(NoError) {};
@@ -160,10 +161,10 @@
        */
       struct terminal_command_t {
         /** Fixed array for raw incoming serial rx data */
-        char serialRx[TERM_CHAR_BUFFER_SIZE] = {'\0'};
+        char serialRx[TERM_CHAR_BUFFER_SIZE + 1] = {'\0'};
 
         /** Fixed array for holding the received command data */
-        char data[TERM_CHAR_BUFFER_SIZE] = {'\0'};
+        char data[TERM_CHAR_BUFFER_SIZE + 1] = {'\0'};
 
         /** Fixed array for holding hex values to be sent/received via TwoWire/I2C */
         uint8_t twowire[TERM_TWOWIRE_BUFFER_SIZE] = {0};
@@ -178,10 +179,10 @@
         uint8_t iArgs;
 
         /** Total length in char of buffer preceding first space character*/
-        uint8_t lengthCmd;
+        uint8_t cmdLength;
 
         /** Total length in char and without spaces of buffer following first space character*/
-        uint8_t lengthArgs;
+        uint8_t argsLength;
 
         /** Index of current character in incoming serial rx data array */
         uint16_t index;
@@ -204,8 +205,8 @@
           protocol(UNDEFINED), 
           pArgs(nullptr),
           iArgs(0U), 
-          lengthCmd(0U), 
-          lengthArgs(0U), 
+          cmdLength(0U), 
+          argsLength(0U), 
           index(0U), 
           complete(false), 
           overflow(false) {}
@@ -270,8 +271,8 @@
           this->protocol    = UNDEFINED;
           this->pArgs       = nullptr;
           this->iArgs       = 0U;
-          this->lengthCmd   = 0U;
-          this->lengthArgs  = 0U;
+          this->cmdLength   = 0U;
+          this->argsLength  = 0U;
           this->index       = 0U;
           this->flushTwoWire();
           memset(this->data, '\0', sizeof(this->data));

@@ -82,10 +82,11 @@ namespace TerminalCommander {
         }
       }
       writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
-      for(uint8_t k = 0; k < TERM_CHAR_BUFFER_SIZE; k++) {
-        this->pSerial->print(this->lastError.message[k]);
-      }
-      this->pSerial->print('\n');
+      // for(uint8_t k = 0; k < TERM_CHAR_BUFFER_SIZE; k++) {
+      //   this->pSerial->print(this->lastError.message[k]);
+      // }
+      // this->pSerial->print('\n');
+      this->pSerial->println(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
     }
@@ -93,10 +94,11 @@ namespace TerminalCommander {
       this->serialCommandProcessor();
 
       if (this->lastError.flag) {
-        for(uint8_t k = 0; k < (TERM_CHAR_BUFFER_SIZE - 1); k++) {
-          this->pSerial->print(this->lastError.message[k]);
-        }
-        this->pSerial->print('\n');
+        // for(uint8_t k = 0; k < (TERM_CHAR_BUFFER_SIZE - 1); k++) {
+        //   this->pSerial->print(this->lastError.message[k]);
+        // }
+        // this->pSerial->print('\n');
+        this->pSerial->println(this->lastError.message);
         this->lastError.clear();
       }
       else {
@@ -123,13 +125,11 @@ namespace TerminalCommander {
     uint8_t data_index = 0;
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
       // remove whitespace from input character string
-      if (((uint8_t)this->command.serialRx[serialrx_index] != 10) && 
-          ((uint8_t)this->command.serialRx[serialrx_index] != 13) &&  
-          ((uint8_t)this->command.serialRx[serialrx_index] != 32)) {
+      if (!isSpace(this->command.serialRx[serialrx_index])) {
         if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
-          if (this->command.lengthCmd == 0) {
-            this->command.lengthCmd = data_index;
+          if (this->command.cmdLength == 0) {
+            this->command.cmdLength = data_index;
           }
           break;
         }
@@ -138,14 +138,16 @@ namespace TerminalCommander {
         }
         data_index++;
       }
-      else if ((this->command.pArgs == nullptr) && (data_index != 0)) {
-        // store pointer to 1st non-space char after 1st space (if any) to enable passing user args
-        this->command.pArgs = &this->command.data[serialrx_index];
-        this->command.iArgs = serialrx_index;
-        this->command.lengthCmd = data_index;
+      else if ((this->command.pArgs == nullptr) && 
+               (data_index != 0) && 
+               (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
+        // Store pointer to next char character after the 1st space to enable passing user args
+        this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
+        this->command.iArgs = serialrx_index + 1;
+        this->command.cmdLength = data_index;
       }
     }
-    this->command.lengthArgs = data_index - this->command.lengthCmd;
+    this->command.argsLength = data_index - this->command.cmdLength;
 
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
         (this->command.data[1] == '2' || this->command.data[1] == '@') &&
@@ -157,16 +159,16 @@ namespace TerminalCommander {
       }
 
       // if command was sent without spaces then set correct length for command and args
-      if (this->command.lengthCmd == 0) {
-        this->command.lengthCmd = 4U;
-        this->command.lengthArgs = data_index - 4U;
+      if (this->command.cmdLength == 0) {
+        this->command.cmdLength = 4U;
+        this->command.argsLength = data_index - 4U;
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
         this->command.protocol = I2C_READ;
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
-        if (command.lengthArgs < 6U) {
+        if (command.argsLength < 6U) {
           this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
           return;
         }
@@ -205,7 +207,7 @@ namespace TerminalCommander {
           return;
         }
         delayMicroseconds(50);
-        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.lengthArgs >> 1) - 1));
+        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.argsLength >> 1) - 1));
         delayMicroseconds(50);
         while(this->pWire->available()) {
             if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
@@ -247,7 +249,7 @@ namespace TerminalCommander {
 
         this->pWire->beginTransmission(i2c_address);
         this->pWire->write(i2c_register);
-        for (uint8_t k = 4; k < this->command.lengthArgs; k += 2) {
+        for (uint8_t k = 4; k < this->command.argsLength; k += 2) {
           this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
         }
         twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
@@ -257,7 +259,7 @@ namespace TerminalCommander {
         }
         else {
           this->pSerial->print(F("Write Data:"));
-          for(uint8_t k = 4; k < this->command.lengthArgs; k += 2) {
+          for(uint8_t k = 4; k < this->command.argsLength; k += 2) {
             uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
             if (write_data < 0x01) {
               this->pSerial->print(F(" 0x0"));
@@ -274,7 +276,7 @@ namespace TerminalCommander {
 
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
-        if (this->command.lengthArgs != 0) {
+        if (this->command.argsLength != 0) {
           writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
@@ -287,17 +289,23 @@ namespace TerminalCommander {
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
         if (this->command.pArgs != nullptr) {
-          // char user_command[TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1]; 
-          // memcpy(&this->command.serialRx[this->command.pArgs + 1], user_command, (TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1));
-
-          // this->pSerial->println(user_command);
-
-          // for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-          //   if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
-          //     this->userCharCallbacks[k].callback((char*)this->command.serialRx, sizeof(this->command.serialRx));
-          //     return;
-          //   }
-          // }
+          char user_command[this->command.cmdLength + 1] = {'\0'};
+          memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
+          for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+            if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
+              while (*this->command.pArgs != '\0'){
+                if (isSpace(this->command.pArgs[0])) {
+                  this->command.pArgs++;
+                }
+                else {
+                  break;
+                }
+              }
+              this->userCharCallbacks[k].callback(this->command.pArgs, 
+                                                  (size_t)(TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1U));
+              return;
+            }
+          }
         }
         else {
           for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
@@ -469,8 +477,9 @@ namespace TerminalCommander {
     }
   }
 
+  /// TODO: move as much of this as possible into an error_t member
   void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
-    memset(message, '\0', TERM_CHAR_BUFFER_SIZE);
+    memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
     strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
   }
 }
