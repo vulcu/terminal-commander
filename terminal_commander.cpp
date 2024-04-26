@@ -1,5 +1,5 @@
 /*
- * terminal_commander.h - Defnition for the Terminal Commander Class
+ * terminal_commander.h - Interactive I2C and Hardware Control Terminal for Arduino
  * 
  * Created: 3/4/2021
  * Author : Winry Litwa-Vulcu
@@ -82,10 +82,6 @@ namespace TerminalCommander {
         }
       }
       writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
-      // for(uint8_t k = 0; k < TERM_CHAR_BUFFER_SIZE; k++) {
-      //   this->pSerial->print(this->lastError.message[k]);
-      // }
-      // this->pSerial->print('\n');
       this->pSerial->println(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
@@ -94,10 +90,6 @@ namespace TerminalCommander {
       this->serialCommandProcessor();
 
       if (this->lastError.flag) {
-        // for(uint8_t k = 0; k < (TERM_CHAR_BUFFER_SIZE - 1); k++) {
-        //   this->pSerial->print(this->lastError.message[k]);
-        // }
-        // this->pSerial->print('\n');
         this->pSerial->println(this->lastError.message);
         this->lastError.clear();
       }

@@ -1,5 +1,5 @@
 /*
- * terminal_commander.h - Declaration for the Terminal Commander Class
+ * terminal_commander.h - Interactive I2C and Hardware Control Terminal for Arduino
  * 
  * Created: 3/4/2021
  * Author : Winry Litwa-Vulcu
