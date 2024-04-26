@@ -43,7 +43,7 @@
    * @param  s2  Null-terminated byte string.
    * @return int 
    */
-  int16_t strcmp(const char *s1, const char *s2) __attribute__((weak));
+  extern int16_t strcmp(const char *s1, const char *s2) __attribute__((weak));
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
@@ -74,7 +74,6 @@
         InvalidHexValuePair, 
         UnrecognizedProtocol, 
         UnrecognizedI2CTransType, 
-        UserArgumentDataMissing, 
       };
 
       enum twi_error_type_t {

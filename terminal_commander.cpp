@@ -41,7 +41,6 @@ namespace TerminalCommander {
   static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
   static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
   static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
-  static const char strErrUserArgumentDataMissing[] PROGMEM = "Input Error: User argument data is missing\n";
 
   static const char *const string_error_table[] PROGMEM = 
   {
@@ -56,8 +55,7 @@ namespace TerminalCommander {
     strErrInvalidTwoWireWriteData, 
     strErrInvalidHexValuePair, 
     strErrUnrecognizedProtocol, 
-    strErrUnrecognizedI2CTransType, 
-    strErrUserArgumentDataMissing 
+    strErrUnrecognizedI2CTransType
   };
 
   TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
