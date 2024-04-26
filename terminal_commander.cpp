@@ -143,7 +143,11 @@ namespace TerminalCommander {
                (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
         // Store pointer to next char character after the 1st space to enable passing user args
         this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
-        this->command.iArgs = serialrx_index + 1;
+
+        // Store index corresponding to pointer location since it is start index of user args
+        this->command.iArgs = serialrx_index;
+
+        // Space character is treated as delimiter for commands even if not a user command
         this->command.cmdLength = data_index;
       }
     }
@@ -293,6 +297,7 @@ namespace TerminalCommander {
           memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
           for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
             if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
+              // remove leading whitespace
               while (*this->command.pArgs != '\0'){
                 if (isSpace(this->command.pArgs[0])) {
                   this->command.pArgs++;
@@ -302,8 +307,17 @@ namespace TerminalCommander {
                   break;
                 }
               }
-              this->userCharCallbacks[k].callback(this->command.pArgs, 
-                                                  (size_t)(TERM_CHAR_BUFFER_SIZE - this->command.iArgs - 1U));
+
+              // get char count for user args not including trailing whitespace/terminators
+              uint8_t user_args_length = 0;
+              for (uint8_t k = TERM_CHAR_BUFFER_SIZE; k > this->command.iArgs; k--) {
+                if ((this->command.serialRx[k] != '\0') && !isSpace(this->command.serialRx[k])) {
+                  user_args_length = k - this->command.iArgs;
+                  break;
+                }
+              }
+
+              this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
               return;
             }
           }
