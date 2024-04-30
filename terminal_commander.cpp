@@ -322,10 +322,9 @@ namespace TerminalCommander {
         this->i2cWrite();
         return;
       }
-      else {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
-        return;
-      }
+
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+      return;
     }
     else if (strncasecmp(this->command.data, "SCAN", 4)) {
       this->i2cScan();
