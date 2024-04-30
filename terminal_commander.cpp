@@ -313,9 +313,11 @@ namespace TerminalCommander {
       }
 
       // if command was sent without spaces then set correct length for command and args
-      if (this->command.cmdLength == 0) {
+      // cmdLength will be length of command and args, e.g. I2CWffffff, and should be
+      // set to 4 and argsLength to (cmd+args).length - cmd.
+      if (this->command.cmdLength > 4U) {
+        this->command.argsLength = this->command.cmdLength - 4U;
         this->command.cmdLength = 4U;
-        this->command.argsLength = data_index - 4U;
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
