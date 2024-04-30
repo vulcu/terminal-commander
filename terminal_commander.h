@@ -43,7 +43,35 @@
    * @param  s2  Null-terminated byte string.
    * @return int 
    */
-  extern int16_t strcmp(const char *s1, const char *s2) __attribute__((weak));
+  extern int strcmp(const char *s1, const char *s2) __attribute__((weak));
+
+  /**
+   * @brief Convert a single ASCII character to its lowercase counterpart.
+   *
+   * @details Ignores characters outsize of A-Z.
+   * 
+   * @param  c  ASCII Character
+   * @return int
+   */
+  extern int tolower(int c) __attribute__((weak));
+
+  /**
+   * @brief Compares two null-terminated byte strings lexicographically,
+   *        limited to a maximum `num` characters. Case-insensitive.
+   *
+   * @details Returns:
+   *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
+   *                   the first not-matching character in s1 has a greater 
+   *                   ASCII value than the corresponding character in s2.
+   *             Zero: If s1 and s2 compare equal.
+   *   Positive Value: If s1 appears after s2 in lexicographical order. 
+   *
+   * @param  s1   Null-terminated byte string.
+   * @param  s2   Null-terminated byte string.
+   * @param  num  Maximum number of characters to compare.
+   * @return int 
+   */
+  extern int strncasecmp(const char *s1, const char *s2, size_t num) __attribute__((weak));
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
@@ -54,11 +82,34 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
-      enum terminal_protocols_t {
-        UNDEFINED = 0,
-        I2C_READ, 
-        I2C_WRITE, 
-        I2C_SCAN, 
+      // put common error messages into Program memory to save SRAM space
+      static const char strErrNoError[] PROGMEM = "No Error\n";
+      static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
+      static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
+      static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
+      static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
+      static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
+      static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
+      static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
+      static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
+      static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
+      static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
+      static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
+
+      static const char *const string_error_table[] PROGMEM = 
+      {
+        strErrNoError,
+        strErrNoInput, 
+        strErrUndefinedUserFunctionPtr, 
+        strErrUnrecognizedInput, 
+        strErrInvalidSerialCmdLength, 
+        strErrIncomingTwoWireReadLength,
+        strErrInvalidTwoWireCharacter, 
+        strErrInvalidTwoWireCmdLength, 
+        strErrInvalidTwoWireWriteData, 
+        strErrInvalidHexValuePair, 
+        strErrUnrecognizedProtocol, 
+        strErrUnrecognizedI2CTransType
       };
 
       enum error_type_t {
@@ -122,6 +173,8 @@
         error_type_t set(error_type_t error_type) {
           this->flag = true;
           this->type = error_type;
+          memset(this->message, '\0', TERM_ERROR_MESSAGE_SIZE);
+          strcpy_P(this->message, (char *)pgm_read_word(&(string_error_table[error_type])));
           return this->type;
         }
 
@@ -152,13 +205,10 @@
           memset(this->message,  '\0', sizeof(this->message));
         }
       };
+    };
 
-      /**
-       * @brief Use this struct to build and config terminal command data.
-       *
-       * @details A more elaborate description of the constructor.
-       */
-      struct terminal_command_t {
+    class Command {
+      public:
         /** Fixed array for raw incoming serial rx data */
         char serialRx[TERM_CHAR_BUFFER_SIZE + 1] = {'\0'};
 
@@ -167,9 +217,6 @@
 
         /** Fixed array for holding hex values to be sent/received via TwoWire/I2C */
         uint8_t twowire[TERM_TWOWIRE_BUFFER_SIZE] = {0};
-
-        /** Protocol type identified for  */
-        terminal_protocols_t protocol;
 
         /** Pointer to first non-space character following a space char in the incoming buffer */
         char *pArgs;
@@ -200,15 +247,7 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        terminal_command_t() :
-          protocol(UNDEFINED), 
-          pArgs(nullptr),
-          iArgs(0U), 
-          cmdLength(0U), 
-          argsLength(0U), 
-          index(0U), 
-          complete(false), 
-          overflow(false) {}
+        Command();
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -218,19 +257,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void next(char character) {
-          if (character == TERM_LINE_ENDING) {
-            this->complete = true;
-            return;
-          } 
-          
-          if (index >= TERM_CHAR_BUFFER_SIZE) {
-            this->overflow = true;
-            return;
-          }
-          
-          serialRx[this->index++] = character;
-        }
+        void next(char character);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -240,11 +267,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void previous(void) {
-          if (this->index > 0) {
-            serialRx[--this->index] = '\0';
-          }
-        }
+        void previous(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -254,11 +277,7 @@
          * @param   void
          * @returns void
          */
-        void flushInput(void) {
-          memset(this->serialRx,  '\0', sizeof(this->serialRx));
-          this->complete = false;
-          this->overflow = false;
-        }
+        void flushInput(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -268,9 +287,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void flushTwoWire(void) {
-          memset(this->twowire, 0, sizeof(this->twowire));
-        }
+        void flushTwoWire(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -280,16 +297,7 @@
          * @param   void
          * @returns void
          */
-        void initialize(void) {
-          this->protocol    = UNDEFINED;
-          this->pArgs       = nullptr;
-          this->iArgs       = 0U;
-          this->cmdLength   = 0U;
-          this->argsLength  = 0U;
-          this->index       = 0U;
-          this->flushTwoWire();
-          memset(this->data, '\0', sizeof(this->data));
-        }
+        void initialize(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -299,12 +307,15 @@
          * @param   void
          * @returns void
          */
-        void reset(void) {
-          this->flushInput();
-          this->initialize();
-        }
-      };
-    }
+        void reset(void);
+
+        /**
+         * @brief Remove spaces from incoming serial command.
+         */
+        bool removeSpaces(void);
+
+      private:
+    };
 
     class TerminalCommander {
       public:
@@ -337,8 +348,16 @@
         uint8_t numUserCharCallbacks = 0;
 
         TerminalCommanderTypes::error_t lastError;
-        TerminalCommanderTypes::terminal_command_t command;
+
+        /**
+         * @brief Use this struct to build and config terminal command data.
+         *
+         * @details A more elaborate description of the constructor.
+         */
+        Command command;
+
         Stream *pSerial;
+
         TwoWire *pWire;
 
         /*! @brief  Execute incoming serial string by command or protocol type
@@ -396,14 +415,11 @@
         */
         void scanTwoWireBus(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
-        * @returns void
-        */
-        void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
+
+        void i2cRead(void);
+        void i2cWrite(void);
+        void i2cScan(void);
+        bool runUserCallbacks(void);
     };
-  }
+  };
 #endif
