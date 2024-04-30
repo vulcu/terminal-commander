@@ -424,6 +424,12 @@
         */
         void scanTwoWireBus(void);
 
+
+        void i2cRead(void);
+        void i2cWrite(void);
+        void i2cScan(void);
+        bool runUserCallbacks(void);
+
         /*! @brief  Error-check the incoming ASCII command string
         *
         * @details Detailed description here.
