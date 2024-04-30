@@ -33,7 +33,7 @@ namespace TerminalCommander {
   static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
   static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
   static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
-  static const char strErrInvalidSerialCmdLength[] PROGMEM = "Error: Serial Command Length Exceeds Limit\n";
+  static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
   static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
   static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
   static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
@@ -65,8 +65,26 @@ namespace TerminalCommander {
 
   void TerminalCommander::loop(void) {
     while(this->pSerial->available() > 0) {
+      // check for buffer overflow
+      if (this->command.overflow) {
+        break;
+      }      
+
       // get the new byte
-      this->command.next((char)this->pSerial->read());
+      char c = (char)this->pSerial->read();
+      if ((uint8_t)c == 0x08) {
+        // control character 0x08 = backspace
+        this->command.previous();
+      }
+      // if (c == "[C") {
+      //   // control character ESC[C = VT100 Right Cursor Key
+      // }
+      // if (c == "[D") {
+      //   // control character ESC[D = VT100 Left Cursor Key
+      // }
+      else {
+        this->command.next(c);
+      }
     };
 
     if (this->command.overflow) {
@@ -78,6 +96,9 @@ namespace TerminalCommander {
             break;
           }
         }
+        else {
+          break;
+        }
       }
       writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
       this->pSerial->println(this->lastError.message);
@@ -88,12 +109,10 @@ namespace TerminalCommander {
       this->serialCommandProcessor();
 
       if (this->lastError.flag) {
-        this->pSerial->println(this->lastError.message);
+        this->pSerial->print(this->lastError.message);
         this->lastError.clear();
       }
-      else {
-        this->pSerial->print('\n');
-      }
+      this->pSerial->print(F(">> "));
 
       // clear the input buffer array and reset serial logic
       this->command.reset();
@@ -118,7 +137,14 @@ namespace TerminalCommander {
       if (!isSpace(this->command.serialRx[serialrx_index])) {
         if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
+          if (data_index == 0) {
+            // input serial buffer is empty
+            writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+            return;
+          }
+
           if (this->command.cmdLength == 0) {
+            // serial buffer is not empty but command did not have any spaces
             this->command.cmdLength = data_index;
           }
           break;
@@ -182,7 +208,7 @@ namespace TerminalCommander {
 
     switch (command.protocol) {
       case I2C_READ: {
-        this->pSerial->print(F("I2C Read\n"));
+        this->pSerial->println(F("I2C Read"));
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         this->printTwoWireAddress(i2c_address);
@@ -233,7 +259,7 @@ namespace TerminalCommander {
       break;
 
       case I2C_WRITE: {
-        this->pSerial->print(F("I2C Write\n"));
+        this->pSerial->println(F("I2C Write"));
         const uint8_t i2c_address =
           (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
         this->printTwoWireAddress(i2c_address);
@@ -275,7 +301,7 @@ namespace TerminalCommander {
           return;
         }
 
-        this->pSerial->print(F("Scan I2C Bus for Available Devices\n"));
+        this->pSerial->println(F("Scan I2C Bus for Available Devices"));
         this->scanTwoWireBus();
       }
       break;

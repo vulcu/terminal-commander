@@ -237,6 +237,20 @@
          *
          * @details A more elaborate description of the constructor.
          * 
+         * @param   param Description of the input parameter
+         * @returns void
+         */
+        void previous(void) {
+          if (this->index > 0) {
+            serialRx[--this->index] = '\0';
+          }
+        }
+
+        /**
+         * @brief Use this struct to build and config terminal command data.
+         *
+         * @details A more elaborate description of the constructor.
+         * 
          * @param   void
          * @returns void
          */
