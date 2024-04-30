@@ -263,14 +263,8 @@ namespace TerminalCommander {
 
     if (this->command.overflow) {
       // discard incoming data until the serial line ending is received
-      while(1) {
-        if (this->pSerial->available() > 0) {
-          char character = (char)this->pSerial->read();
-          if (character == TERM_LINE_ENDING) { 
-            break;
-          }
-        }
-        else {
+      while (this->pSerial->available() > 0) {
+        if ((char)this->pSerial->read() == TERM_LINE_ENDING) { 
           break;
         }
       }
