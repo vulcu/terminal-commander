@@ -202,14 +202,16 @@ namespace TerminalCommander {
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
-        this->command.protocol = I2C_READ;
+        this->i2cRead();
+        return;
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
         if (command.argsLength < 6U) {
           this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
           return;
         }
-        this->command.protocol = I2C_WRITE;
+        this->i2cWrite();
+        return;
       }
       else {
         this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
@@ -217,29 +219,13 @@ namespace TerminalCommander {
       }
     }
     else if (strncasecmp(this->command.data, "SCAN", 4)) {
-      this->command.protocol = I2C_SCAN;
+      this->i2cScan();
+      return;
     }
 
-    switch (command.protocol) {
-      case I2C_READ:
-        i2cRead();
-        break;
-
-      case I2C_WRITE:
-        i2cWrite();
-        break;
-
-      // Scan TwoWire bus to explore and query available devices
-      case I2C_SCAN:
-        i2cScan();
-        break;
-
-      default:
-        if (!runUserCallbacks()) {
-          // no terminal commander or user-defined command was identified
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-        }
-        break;
+    if (!this->runUserCallbacks()) {
+      // no terminal commander or user-defined command was identified
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
     }
   }
 
