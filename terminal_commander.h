@@ -173,13 +173,10 @@
           memset(this->message,  '\0', sizeof(this->message));
         }
       };
+    };
 
-      /**
-       * @brief Use this struct to build and config terminal command data.
-       *
-       * @details A more elaborate description of the constructor.
-       */
-      struct terminal_command_t {
+    class Command {
+      public:
         /** Fixed array for raw incoming serial rx data */
         char serialRx[TERM_CHAR_BUFFER_SIZE + 1] = {'\0'};
 
@@ -218,14 +215,7 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        terminal_command_t() :
-          pArgs(nullptr),
-          iArgs(0U), 
-          cmdLength(0U), 
-          argsLength(0U), 
-          index(0U), 
-          complete(false), 
-          overflow(false) {}
+        Command();
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -235,19 +225,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void next(char character) {
-          if (character == TERM_LINE_ENDING) {
-            this->complete = true;
-            return;
-          } 
-          
-          if (index >= TERM_CHAR_BUFFER_SIZE) {
-            this->overflow = true;
-            return;
-          }
-          
-          serialRx[this->index++] = character;
-        }
+        void next(char character);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -257,11 +235,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void previous(void) {
-          if (this->index > 0) {
-            serialRx[--this->index] = '\0';
-          }
-        }
+        void previous(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -271,11 +245,7 @@
          * @param   void
          * @returns void
          */
-        void flushInput(void) {
-          memset(this->serialRx,  '\0', sizeof(this->serialRx));
-          this->complete = false;
-          this->overflow = false;
-        }
+        void flushInput(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -285,9 +255,7 @@
          * @param   param Description of the input parameter
          * @returns void
          */
-        void flushTwoWire(void) {
-          memset(this->twowire, 0, sizeof(this->twowire));
-        }
+        void flushTwoWire(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -297,15 +265,7 @@
          * @param   void
          * @returns void
          */
-        void initialize(void) {
-          this->pArgs       = nullptr;
-          this->iArgs       = 0U;
-          this->cmdLength   = 0U;
-          this->argsLength  = 0U;
-          this->index       = 0U;
-          this->flushTwoWire();
-          memset(this->data, '\0', sizeof(this->data));
-        }
+        void initialize(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -315,12 +275,15 @@
          * @param   void
          * @returns void
          */
-        void reset(void) {
-          this->flushInput();
-          this->initialize();
-        }
-      };
-    }
+        void reset(void);
+
+        /**
+         * @brief Remove spaces from incoming serial command.
+         */
+        bool removeSpaces(void);
+
+      private:
+    };
 
     class TerminalCommander {
       public:
@@ -353,8 +316,16 @@
         uint8_t numUserCharCallbacks = 0;
 
         TerminalCommanderTypes::error_t lastError;
-        TerminalCommanderTypes::terminal_command_t command;
+
+        /**
+         * @brief Use this struct to build and config terminal command data.
+         *
+         * @details A more elaborate description of the constructor.
+         */
+        Command command;
+
         Stream *pSerial;
+
         TwoWire *pWire;
 
         /*! @brief  Execute incoming serial string by command or protocol type
@@ -427,5 +398,5 @@
         */
         void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
     };
-  }
+  };
 #endif

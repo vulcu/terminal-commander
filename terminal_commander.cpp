@@ -78,6 +78,160 @@ namespace TerminalCommander {
     strErrUnrecognizedI2CTransType
   };
 
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   void
+   * @returns Description of the returned parameter
+   */
+  Command::Command() :
+    pArgs(nullptr),
+    iArgs(0U), 
+    cmdLength(0U), 
+    argsLength(0U), 
+    index(0U), 
+    complete(false), 
+    overflow(false) {}
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   param Description of the input parameter
+   * @returns void
+   */
+  void Command::next(char character) {
+    if (character == TERM_LINE_ENDING) {
+      this->complete = true;
+      return;
+    } 
+    
+    if (index >= TERM_CHAR_BUFFER_SIZE) {
+      this->overflow = true;
+      return;
+    }
+    
+    serialRx[this->index++] = character;
+  }
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   param Description of the input parameter
+   * @returns void
+   */
+  void Command::previous(void) {
+    if (this->index > 0) {
+      serialRx[--this->index] = '\0';
+    }
+  }
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   void
+   * @returns void
+   */
+  void Command::flushInput(void) {
+    memset(this->serialRx,  '\0', sizeof(this->serialRx));
+    this->complete = false;
+    this->overflow = false;
+  }
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   param Description of the input parameter
+   * @returns void
+   */
+  void Command::flushTwoWire(void) {
+    memset(this->twowire, 0, sizeof(this->twowire));
+  }
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   void
+   * @returns void
+   */
+  void Command::initialize(void) {
+    this->pArgs       = nullptr;
+    this->iArgs       = 0U;
+    this->cmdLength   = 0U;
+    this->argsLength  = 0U;
+    this->index       = 0U;
+    this->flushTwoWire();
+    memset(this->data, '\0', sizeof(this->data));
+  }
+
+  /**
+   * @brief Use this struct to build and config terminal command data.
+   *
+   * @details A more elaborate description of the constructor.
+   * 
+   * @param   void
+   * @returns void
+   */
+  void Command::reset(void) {
+    this->flushInput();
+    this->initialize();
+  }
+
+  /**
+   * @brief Remove spaces from incoming serial command.
+   */
+  bool Command::removeSpaces(void) {
+    uint8_t data_index = 0;
+    for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
+      // remove whitespace from input character string
+      if (!isSpace(this->serialRx[serialrx_index])) {
+        if (this->serialRx[serialrx_index] == '\0') {
+          // end of serial input data has been reached
+          if (data_index == 0) {
+            // input serial buffer is empty
+            return false;
+          }
+
+          if (this->cmdLength == 0) {
+            // serial buffer is not empty but command did not have any spaces
+            this->cmdLength = data_index;
+          }
+          break;
+        }
+        else {
+          this->data[data_index] = this->serialRx[serialrx_index];
+        }
+        data_index++;
+      }
+      else if ((this->pArgs == nullptr) && 
+               (data_index != 0) && 
+               (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
+        // Store pointer to next char character after the 1st space to enable passing user args
+        this->pArgs = (char*)(&this->serialRx[serialrx_index]) + 1;
+
+        // Store index corresponding to pointer location since it is start index of user args
+        this->iArgs = serialrx_index;
+
+        // Space character is treated as delimiter for commands even if not a user command
+        this->cmdLength = data_index;
+      }
+    }
+    this->argsLength = data_index - this->cmdLength;
+
+    return true;
+  }
+
   TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
     this->pSerial = pSerial;
     this->pWire = pWire;
@@ -88,7 +242,7 @@ namespace TerminalCommander {
       // check for buffer overflow
       if (this->command.overflow) {
         break;
-      }      
+      }
 
       // get the new byte
       char c = (char)this->pSerial->read();
@@ -143,53 +297,16 @@ namespace TerminalCommander {
     this->numUserCharCallbacks++;
   }
 
-  /// TODO: break this up into smaller methods
   void TerminalCommander::serialCommandProcessor(void) {
     if (!this->isRxBufferDataValid()) {
       return;
     }    
-
-    // remove spaces from incoming serial command
-    uint8_t data_index = 0;
-    for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
-      // remove whitespace from input character string
-      if (!isSpace(this->command.serialRx[serialrx_index])) {
-        if (this->command.serialRx[serialrx_index] == '\0') {
-          // end of serial input data has been reached
-          if (data_index == 0) {
-            // input serial buffer is empty
-            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
-            return;
-          }
-
-          if (this->command.cmdLength == 0) {
-            // serial buffer is not empty but command did not have any spaces
-            this->command.cmdLength = data_index;
-          }
-          break;
-        }
-        else {
-          this->command.data[data_index] = this->command.serialRx[serialrx_index];
-        }
-        data_index++;
-      }
-      else if ((this->command.pArgs == nullptr) && 
-               (data_index != 0) && 
-               (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
-        // Store pointer to next char character after the 1st space to enable passing user args
-        this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
-
-        // Store index corresponding to pointer location since it is start index of user args
-        this->command.iArgs = serialrx_index;
-
-        // Space character is treated as delimiter for commands even if not a user command
-        this->command.cmdLength = data_index;
-      }
+    if (!this->command.removeSpaces()) {
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      return;
     }
-    this->command.argsLength = data_index - this->command.cmdLength;
 
     if (strncasecmp(this->command.data, "I2C", 3)) {
-
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
         return;
