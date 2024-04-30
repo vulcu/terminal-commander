@@ -100,7 +100,7 @@ namespace TerminalCommander {
           break;
         }
       }
-      writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
       this->pSerial->println(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
@@ -139,7 +139,7 @@ namespace TerminalCommander {
           // end of serial input data has been reached
           if (data_index == 0) {
             // input serial buffer is empty
-            writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
             return;
           }
 
@@ -297,7 +297,7 @@ namespace TerminalCommander {
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
         if (this->command.argsLength != 0) {
-          writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
 
@@ -348,7 +348,7 @@ namespace TerminalCommander {
         }
 
         // no terminal commander or user-defined command was identified
-        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       }
       break;
     }
@@ -388,14 +388,14 @@ namespace TerminalCommander {
       }
       else {
         // an input buffer value was unrecognized
-        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
         return false;
       }
     }
 
     if (idx == 0) {
       // input serial buffer is empty
-      writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
       return false;
     }
 
@@ -511,6 +511,6 @@ namespace TerminalCommander {
   /// TODO: move as much of this as possible into an error_t member
   void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
     memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
-    strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
+    strcpy_P(message, (char *)pgm_read_word(&(this->string_error_table[error])));
   }
 }
