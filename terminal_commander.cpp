@@ -502,14 +502,9 @@ namespace TerminalCommander {
       for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
         if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
           // remove leading whitespace
-          while (*this->command.pArgs != '\0'){
-            if (isSpace(this->command.pArgs[0])) {
-              this->command.pArgs++;
-              this->command.iArgs++;
-            }
-            else {
-              break;
-            }
+          while (*this->command.pArgs != '\0' && isSpace(this->command.pArgs[0])) {
+            this->command.pArgs++;
+            this->command.iArgs++;
           }
 
           // get char count for user args not including trailing whitespace/terminators
