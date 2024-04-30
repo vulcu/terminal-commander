@@ -217,7 +217,7 @@ namespace TerminalCommander {
         return;
       }
     }
-    if (strncasecmp(this->command.data, "SCAN", 4)) {
+    else if (strncasecmp(this->command.data, "SCAN", 4)) {
       this->command.protocol = I2C_SCAN;
     }
 
