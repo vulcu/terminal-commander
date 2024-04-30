@@ -206,10 +206,6 @@ namespace TerminalCommander {
         return;
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
-        if (command.argsLength < 6U) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
-          return;
-        }
         this->i2cWrite();
         return;
       }
@@ -435,38 +431,42 @@ namespace TerminalCommander {
   }
 
   void TerminalCommander::i2cWrite(void) {
-      this->pSerial->println(F("I2C Write"));
-      const uint8_t i2c_address =
-        (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
-      this->printTwoWireAddress(i2c_address);
-      const uint8_t i2c_register =
-        (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
-      this->printTwoWireRegister(i2c_register);
+    if (this->command.argsLength < 6U) {
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
+      return;
+    }
 
-      this->pWire->beginTransmission(i2c_address);
-      this->pWire->write(i2c_register);
-      for (uint8_t k = 4; k < this->command.argsLength; k += 2) {
-        this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
-      }
-      twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
-      if (error == NACK_ADDRESS) {
-        this->pSerial->println(F("Error: I2C write attempt recieved NACK"));
-        return;
-      }
-      else {
-        this->pSerial->print(F("Write Data:"));
-        for(uint8_t k = 4; k < this->command.argsLength; k += 2) {
-          uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
-          if (write_data < 0x01) {
-            this->pSerial->print(F(" 0x0"));
-          }
-          else {
-            this->pSerial->print(F(" 0x"));
-          }
-          this->pSerial->print(write_data, HEX);
+    this->pSerial->println(F("I2C Write"));
+    const uint8_t i2c_address =
+      (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
+    this->printTwoWireAddress(i2c_address);
+    const uint8_t i2c_register =
+      (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
+    this->printTwoWireRegister(i2c_register);
+
+    this->pWire->beginTransmission(i2c_address);
+    this->pWire->write(i2c_register);
+    for (uint8_t k = 4; k < this->command.argsLength; k += 2) {
+      this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
+    }
+    twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
+    if (error == NACK_ADDRESS) {
+      this->pSerial->println(F("Error: I2C write attempt recieved NACK"));
+      return;
+    }
+    else {
+      this->pSerial->print(F("Write Data:"));
+      for(uint8_t k = 4; k < this->command.argsLength; k += 2) {
+        uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
+        if (write_data < 0x01) {
+          this->pSerial->print(F(" 0x0"));
         }
-        this->pSerial->print('\n');
+        else {
+          this->pSerial->print(F(" 0x"));
+        }
+        this->pSerial->print(write_data, HEX);
       }
+      this->pSerial->print('\n');
     }
   }
 
