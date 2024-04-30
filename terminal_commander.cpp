@@ -282,7 +282,7 @@ namespace TerminalCommander {
       this->serialCommandProcessor();
 
       if (this->lastError.flag) {
-        this->pSerial->print(this->lastError.message);
+        this->pSerial->println(this->lastError.message);
         this->lastError.clear();
       }
       this->pSerial->print(F(">> "));
