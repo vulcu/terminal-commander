@@ -25,6 +25,26 @@ int strcmp(const char *s1, const char *s2) {
   return 0;
 }
 
+int tolower(int c) {
+  return c >= 'A' && c <= 'Z' ? c + 32 : c;
+}
+
+int strncasecmp(const char *s1, const char *s2, size_t num) {
+  const unsigned char *p1 = (const unsigned char *)s1;
+  const unsigned char *p2 = (const unsigned char *)s2;
+
+	if (num == 0) return 0;
+
+	while (num-- != 0 && tolower(*p1) == tolower(*p2)) {
+		if (num == 0 || *p1 == '\0' || *p2 == '\0')
+			break;
+		p1++;
+		p2++;
+	}
+
+	return tolower(*p1) - tolower(*p2);
+}
+
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
@@ -169,9 +189,7 @@ namespace TerminalCommander {
     }
     this->command.argsLength = data_index - this->command.cmdLength;
 
-    if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
-        (this->command.data[1] == '2' || this->command.data[1] == '@') &&
-        (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
+    if (strncasecmp(this->command.data, "I2C", 3)) {
 
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
@@ -199,10 +217,7 @@ namespace TerminalCommander {
         return;
       }
     }
-    else if ((this->command.data[0] == 's' || this->command.data[0] == 'S') &&
-             (this->command.data[1] == 'c' || this->command.data[1] == 'C') &&
-             (this->command.data[2] == 'a' || this->command.data[2] == 'A') &&
-             (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
+    if (strncasecmp(this->command.data, "SCAN", 4)) {
       this->command.protocol = I2C_SCAN;
     }
 

@@ -45,6 +45,34 @@
    */
   extern int strcmp(const char *s1, const char *s2) __attribute__((weak));
 
+  /**
+   * @brief Convert a single ASCII character to its lowercase counterpart.
+   *
+   * @details Ignores characters outsize of A-Z.
+   * 
+   * @param  c  ASCII Character
+   * @return int
+   */
+  extern int tolower(int c) __attribute__((weak));
+
+  /**
+   * @brief Compares two null-terminated byte strings lexicographically,
+   *        limited to a maximum `num` characters. Case-insensitive.
+   *
+   * @details Returns:
+   *   Negative Value: If s1 appears before s2 in lexicographical order. Or, 
+   *                   the first not-matching character in s1 has a greater 
+   *                   ASCII value than the corresponding character in s2.
+   *             Zero: If s1 and s2 compare equal.
+   *   Positive Value: If s1 appears after s2 in lexicographical order. 
+   *
+   * @param  s1   Null-terminated byte string.
+   * @param  s2   Null-terminated byte string.
+   * @param  num  Maximum number of characters to compare.
+   * @return int 
+   */
+  extern int strncasecmp(const char *s1, const char *s2, size_t num) __attribute__((weak));
+
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
       // the following only works for lambda expressions that do NOT capture local variables, e.g. [](){}
