@@ -43,7 +43,7 @@
    * @param  s2  Null-terminated byte string.
    * @return int 
    */
-  extern int16_t strcmp(const char *s1, const char *s2) __attribute__((weak));
+  extern int strcmp(const char *s1, const char *s2) __attribute__((weak));
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {

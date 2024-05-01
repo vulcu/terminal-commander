@@ -7,7 +7,7 @@
 
 #include "terminal_commander.h"
 
-int16_t strcmp(const char *s1, const char *s2) {
+int strcmp(const char *s1, const char *s2) {
   const unsigned char *p1 = (const unsigned char *)s1;
   const unsigned char *p2 = (const unsigned char *)s2;
 
@@ -100,7 +100,7 @@ namespace TerminalCommander {
           break;
         }
       }
-      writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
       this->pSerial->println(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
@@ -139,7 +139,7 @@ namespace TerminalCommander {
           // end of serial input data has been reached
           if (data_index == 0) {
             // input serial buffer is empty
-            writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
             return;
           }
 
@@ -179,7 +179,7 @@ namespace TerminalCommander {
       }
 
       // if command was sent without spaces then set correct length for command and args
-      if (this->command.cmdLength == 0) {
+      if (this->command.argsLength == 0) {
         this->command.cmdLength = 4U;
         this->command.argsLength = data_index - 4U;
       }
@@ -297,7 +297,7 @@ namespace TerminalCommander {
       // Scan TwoWire bus to explore and query available devices
       case I2C_SCAN: {
         if (this->command.argsLength != 0) {
-          writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
 
@@ -316,8 +316,8 @@ namespace TerminalCommander {
               // remove leading whitespace
               while (*this->command.pArgs != '\0'){
                 if (isSpace(this->command.pArgs[0])) {
-                  this->command.pArgs++;
-                  this->command.iArgs++;
+                this->command.pArgs++;
+                this->command.iArgs++;
                 }
                 else {
                   break;
@@ -348,7 +348,7 @@ namespace TerminalCommander {
         }
 
         // no terminal commander or user-defined command was identified
-        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       }
       break;
     }
@@ -388,14 +388,14 @@ namespace TerminalCommander {
       }
       else {
         // an input buffer value was unrecognized
-        writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
         return false;
       }
     }
 
     if (idx == 0) {
       // input serial buffer is empty
-      writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
       return false;
     }
 
