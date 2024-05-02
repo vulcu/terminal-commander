@@ -338,7 +338,7 @@
         * @param   void
         * @returns void
         */
-        void serialCommandProcessor(void);
+        bool serialCommandProcessor(void);
 
         /*! @brief  Error-check the incoming ASCII command string
         *

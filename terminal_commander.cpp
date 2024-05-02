@@ -129,10 +129,9 @@ namespace TerminalCommander {
     this->numUserCharCallbacks++;
   }
 
-  /// TODO: break this up into smaller methods
-  void TerminalCommander::serialCommandProcessor(void) {
+  bool TerminalCommander::serialCommandProcessor(void) {
     if (!this->isRxBufferDataValid()) {
-      return;
+      return false;
     }    
 
     // remove spaces from incoming serial command
@@ -145,7 +144,7 @@ namespace TerminalCommander {
           if (data_index == 0U) {
             // input serial buffer is empty
             this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
-            return;
+            return false;
           }
 
           if (this->command.cmdLength == 0U) {
@@ -186,38 +185,31 @@ namespace TerminalCommander {
 
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
-        return;
+        return false;
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
-        if (!this->readTwoWire()) {
-          return;
-        }
+        return this->readTwoWire();
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
-        if (!this->writeTwoWire()) {
-          return;
-        }
+        return this->writeTwoWire();
       }
-      else {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
-        return;
-      }
+
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+      return false;
     }
     else if ((this->command.data[0] == 's' || this->command.data[0] == 'S') &&
              (this->command.data[1] == 'c' || this->command.data[1] == 'C') &&
              (this->command.data[2] == 'a' || this->command.data[2] == 'A') &&
              (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
-      if (!this->scanTwoWireBus()) {
-        return;
-      }
+      return this->scanTwoWireBus();
     }
-    else {
-      // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-      if (!runUserCallbacks()) {
-        // no terminal commander or user-defined command was identified
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-      }
+
+    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+    if (!runUserCallbacks()) {
+      // no terminal commander or user-defined command was identified
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+      return false;
     }
   }
 
