@@ -173,10 +173,10 @@ namespace TerminalCommander {
         (this->command.data[1] == '2' || this->command.data[1] == '@') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
 
-      // if command was sent without spaces then set correct length for command and args
+      // set correct length for command and args if command sent without spaces or badly formatted
       if (this->command.cmdLength != 4U) {
+        this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
         this->command.cmdLength = 4U;
-        this->command.argsLength = data_index - 4U;
       }
 
       // test if buffer represents hex value pairs and convert these from ASCII to hex
