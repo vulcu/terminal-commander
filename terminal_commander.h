@@ -356,24 +356,6 @@
         */
         bool parseTwoWireData(void);
 
-        /*! @brief  Return the integer represented by a character array
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @returns void
-        */
-        void printTwoWireAddress(uint8_t i2c_address);
-
-        /*! @brief  Return the integer represented by a character array
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @returns void
-        */
-        void printTwoWireRegister(uint8_t i2c_register);
-
         /*! @brief  Error-check the incoming ASCII command string
         *
         * @details Detailed description here.
@@ -402,7 +384,7 @@
         * @param   param    Description of the input parameter
         * @returns uint16_t Total valid character count of incoming buffer
         */
-        void scanTwoWireBus(void);
+        bool scanTwoWireBus(void);
 
         /*! @brief  Error-check the incoming ASCII command string
         *
@@ -413,6 +395,24 @@
         * @returns uint16_t Total valid character count of incoming buffer
         */
         bool runUserCallbacks(void);
+
+        /*! @brief  Return the integer represented by a character array
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @returns void
+        */
+        void printTwoWireAddress(uint8_t i2c_address);
+
+        /*! @brief  Return the integer represented by a character array
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @returns void
+        */
+        void printTwoWireRegister(uint8_t i2c_register);
 
         /*! @brief  Error-check the incoming ASCII command string
         *

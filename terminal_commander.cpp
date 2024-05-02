@@ -203,11 +203,9 @@ namespace TerminalCommander {
              (this->command.data[1] == 'c' || this->command.data[1] == 'C') &&
              (this->command.data[2] == 'a' || this->command.data[2] == 'A') &&
              (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
-      if (this->command.argsLength != 0) {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+      if (!this->scanTwoWireBus()) {
         return;
       }
-      this->scanTwoWireBus();
     }
     else {
       // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
@@ -312,26 +310,6 @@ namespace TerminalCommander {
     return true;
   }
 
-  void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {
-    if (i2c_address < 0x10) {
-      this->pSerial->print(F("Address: 0x0"));
-    }
-    else {
-      this->pSerial->print(F("Address: 0x"));
-    }
-    this->pSerial->println(i2c_address, HEX);
-  }
-
-  void TerminalCommander::printTwoWireRegister(uint8_t i2c_register) {
-    if (i2c_register < 0x10) {
-      this->pSerial->print(F("Register: 0x0"));
-    }
-    else {
-      this->pSerial->print(F("Register: 0x"));
-    }
-    this->pSerial->println(i2c_register, HEX);
-  }
-
   bool TerminalCommander::readTwoWire(void) {
     this->pSerial->println(F("I2C Read"));
     const uint8_t i2c_address =
@@ -423,7 +401,12 @@ namespace TerminalCommander {
     return true;
   }
 
-  void TerminalCommander::scanTwoWireBus(void) {
+  bool TerminalCommander::scanTwoWireBus(void) {
+    if (this->command.argsLength != 0) {
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+      return false;
+    }
+
     this->pSerial->println(F("Scanning for available I2C devices..."));
 
     twi_error_type_t error;
@@ -436,20 +419,13 @@ namespace TerminalCommander {
       error = (twi_error_type_t)(this->pWire->endTransmission());
 
       if (error == NO_ERROR) {
-        this->pSerial->print(F("I2C device found at address 0x"));
-        if (address < 0x10) {
-          this->pSerial->print("0");
-        }
-        this->pSerial->println(address,HEX);
-
+        this->pSerial->print(F("I2C device found at "));
+        this->printTwoWireAddress(address);
         device_count++;
       }
       else if (error == OTHER) {
-        this->pSerial->print(F("Unknown error at address 0x"));
-        if (address < 0x10) {
-          this->pSerial->print("0");
-        }
-        this->pSerial->println(address,HEX);
+        this->pSerial->print(F("Unknown error at "));
+        this->printTwoWireAddress(address);
       }
     }
 
@@ -461,6 +437,7 @@ namespace TerminalCommander {
       pSerial->print(device_count);
       pSerial->println(F(" devices found!"));
     }
+    return true;
   }
 
   bool TerminalCommander::runUserCallbacks(void) {
@@ -499,6 +476,26 @@ namespace TerminalCommander {
       }
     }
     return false;
+  }
+
+  void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {
+    if (i2c_address < 0x10) {
+      this->pSerial->print(F("Address: 0x0"));
+    }
+    else {
+      this->pSerial->print(F("Address: 0x"));
+    }
+    this->pSerial->println(i2c_address, HEX);
+  }
+
+  void TerminalCommander::printTwoWireRegister(uint8_t i2c_register) {
+    if (i2c_register < 0x10) {
+      this->pSerial->print(F("Register: 0x0"));
+    }
+    else {
+      this->pSerial->print(F("Register: 0x"));
+    }
+    this->pSerial->println(i2c_register, HEX);
   }
 
   /// TODO: move as much of this as possible into an error_t member
