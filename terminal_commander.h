@@ -18,6 +18,7 @@
   #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // terminal buffer length in bytes
   #define TERM_TWOWIRE_BUFFER_SIZE  ( 30U)  // TwoWire read/write buffer length
   #define TERM_ERROR_MESSAGE_SIZE   ( 64U)  // error message buffer length
+  #define TERM_MICROSEC_PER_CHAR    (140U)  // assumes 57600 baud minimum
 
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS         ( 10U)

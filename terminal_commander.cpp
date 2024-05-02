@@ -88,17 +88,16 @@ namespace TerminalCommander {
     };
 
     if (this->command.overflow) {
+      // wait for next chararcter in case command is still being transmitted
+      delayMicroseconds(TERM_MICROSEC_PER_CHAR);
+
       // discard incoming data until the serial line ending is received
-      while(1) {
-        if (this->pSerial->available() > 0) {
-          char character = (char)this->pSerial->read();
-          if (character == TERM_LINE_ENDING) { 
-            break;
-          }
-        }
-        else {
+      while (this->pSerial->available() > 0) {
+        if ((char)this->pSerial->read() == TERM_LINE_ENDING) {
           break;
         }
+        // wait to see if another new character will arrive
+        delayMicroseconds(TERM_MICROSEC_PER_CHAR);
       }
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
       this->pSerial->print(this->lastError.message);
