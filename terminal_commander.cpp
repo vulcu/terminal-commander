@@ -219,7 +219,7 @@ namespace TerminalCommander {
     // check validity of input command characters before parsing commands
     uint16_t idx;
     for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
-      // check input serial buffer is only alpha-numeric characters
+      // check input serial buffer only contains permitted ASCII characters
       if (((uint8_t)this->command.serialRx[idx] > 96U) && ((uint8_t)this->command.serialRx[idx] < 122U)) {
         // these are lower-case letters [a-z]
       }
@@ -229,19 +229,22 @@ namespace TerminalCommander {
       else if (((uint8_t)this->command.serialRx[idx] > 64U) && ((uint8_t)this->command.serialRx[idx] < 91U)) {
         // these are upper-case letters [A-Z]
       }
+      else if (isSpace(this->command.serialRx[idx])) {
+        // this is a whitespace character which could be a delimiter
+        // isSpace() returns true for a space, form feed ('\f'), newline ('\n'), 
+        // carriage return ('\r'), horizontal tab ('\t'), or vertical tab ('\v')
+      }
+      else if ((uint8_t)this->command.serialRx[idx] == 44U) {
+        // this is the ',' symbol which could be a delimiter
+      }
       else if ((uint8_t)this->command.serialRx[idx] == 45U) {
         // this is the '-' symbol which could be indicating a negative value
       }
       else if ((uint8_t)this->command.serialRx[idx] == 46U) {
         // this is the '.' symbol which could be indicating a decimal value
       }
-      else if ((uint8_t)this->command.serialRx[idx] == 44U) {
-        // this is the ',' symbol which could be indicating separated values
-      }
-      else if (((uint8_t)this->command.serialRx[idx] == 10U) || 
-              ((uint8_t)this->command.serialRx[idx] == 13U) ||  
-              ((uint8_t)this->command.serialRx[idx] == 32U)) {
-        // this is a space character which could be indicating separated parameters
+      else if ((uint8_t)this->command.serialRx[idx] == 59U) {
+        // this is the ';' symbol which could be a delimiter
       }
       else if (this->command.serialRx[idx] == '\0') {
         // end of serial input data has been reached
