@@ -137,13 +137,13 @@ namespace TerminalCommander {
       if (!isSpace(this->command.serialRx[serialrx_index])) {
         if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
-          if (data_index == 0) {
+          if (data_index == 0U) {
             // input serial buffer is empty
             this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
             return;
           }
 
-          if (this->command.cmdLength == 0) {
+          if (this->command.cmdLength == 0U) {
             // serial buffer is not empty but command did not have any spaces
             this->command.cmdLength = data_index;
           }
@@ -155,7 +155,7 @@ namespace TerminalCommander {
         data_index++;
       }
       else if ((this->command.pArgs == nullptr) && 
-               (data_index != 0) && 
+               (data_index != 0U) && 
                (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
         // Store pointer to next char character after the 1st space to enable passing user args
         this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
@@ -278,16 +278,16 @@ namespace TerminalCommander {
 
       if ((this->command.twowire[idx] > 96U) && (this->command.twowire[idx] < 103U)) {
         // check for lower-case letters [a-f] and convert to upper-case
-        this->command.twowire[idx] -= 32;
+        this->command.twowire[idx] -= 32U;
       }
 
       if ((this->command.twowire[idx] > 47U) && (this->command.twowire[idx] < 58U)) {
         // check for numbers [0-9] and convert ASCII value to numeric
-        this->command.twowire[idx] -= 48;
+        this->command.twowire[idx] -= 48U;
       }
       else if ((this->command.twowire[idx] > 64U) && (this->command.twowire[idx] < 71U)) {
           // check for upper-case letters [A-F] and convert ASCII to numeric
-          this->command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
+          this->command.twowire[idx] -= 55U;  //subract 65, but add 10 because A == 10
       }
       else {
         // an command character is invalid or unrecognized
@@ -330,9 +330,9 @@ namespace TerminalCommander {
       return false;
     }
 
-    delayMicroseconds(50);
+    delayMicroseconds(50U);
     this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.argsLength >> 1) - 1));
-    delayMicroseconds(50);
+    delayMicroseconds(50U);
     while(this->pWire->available()) {
       if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
         this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
@@ -402,7 +402,7 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::scanTwoWireBus(void) {
-    if (this->command.argsLength != 0) {
+    if (this->command.argsLength != 0U) {
       this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       return false;
     }
