@@ -308,47 +308,10 @@ namespace TerminalCommander {
 
       default: {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-        if (this->command.pArgs != nullptr) {
-          char user_command[this->command.cmdLength + 1] = {'\0'};
-          memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
-          for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-            if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
-              // remove leading whitespace
-              while (*this->command.pArgs != '\0'){
-                if (isSpace(this->command.pArgs[0])) {
-                this->command.pArgs++;
-                this->command.iArgs++;
-                }
-                else {
-                  break;
-                }
-              }
-
-              // get char count for user args not including trailing whitespace/terminators
-              uint8_t user_args_length = 0;
-              for (uint8_t k = TERM_CHAR_BUFFER_SIZE; k > this->command.iArgs; k--) {
-                if ((this->command.serialRx[k] != '\0') && !isSpace(this->command.serialRx[k])) {
-                  user_args_length = k - this->command.iArgs;
-                  break;
-                }
-              }
-
-              this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
-              return;
-            }
-          }
-        }
-        else {
-          for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-            if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
-              this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
-              return;
-            }
-          }
-        }
-
-        // no terminal commander or user-defined command was identified
+        if (!runUserCallbacks()) {
+          // no terminal commander or user-defined command was identified
         this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+        }
       }
       break;
     }
@@ -506,6 +469,44 @@ namespace TerminalCommander {
       pSerial->print(device_count);
       pSerial->println(F(" devices found!"));
     }
+  }
+
+  bool TerminalCommander::runUserCallbacks(void) {
+    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+    if (this->command.pArgs != nullptr) {
+      char user_command[this->command.cmdLength + 1] = {'\0'};
+      memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
+      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+        if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
+          // remove leading whitespace
+          while (*this->command.pArgs != '\0' && isSpace(this->command.pArgs[0])) {
+            this->command.pArgs++;
+            this->command.iArgs++;
+          }
+
+          // get char count for user args not including trailing whitespace/terminators
+          uint8_t user_args_length = 0;
+          for (uint8_t k = TERM_CHAR_BUFFER_SIZE; k > this->command.iArgs; k--) {
+            if ((this->command.serialRx[k] != '\0') && !isSpace(this->command.serialRx[k])) {
+              user_args_length = k - this->command.iArgs;
+              break;
+            }
+          }
+
+          this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
+          return true;
+        }
+      }
+    }
+    else {
+      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+        if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
+          this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /// TODO: move as much of this as possible into an error_t member
