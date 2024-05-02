@@ -185,10 +185,14 @@ namespace TerminalCommander {
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
-        this->command.protocol = I2C_READ;
+        if (!this->readTwoWire()) {
+          return;
+        }
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
-        this->command.protocol = I2C_WRITE;
+        if (!this->writeTwoWire()) {
+          return;
+        }
       }
       else {
         this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
@@ -199,42 +203,18 @@ namespace TerminalCommander {
              (this->command.data[1] == 'c' || this->command.data[1] == 'C') &&
              (this->command.data[2] == 'a' || this->command.data[2] == 'A') &&
              (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
-      this->command.protocol = I2C_SCAN;
+      if (this->command.argsLength != 0) {
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+        return;
+      }
+      this->scanTwoWireBus();
     }
-
-    switch (command.protocol) {
-      case I2C_READ: {
-        if (!this->readTwoWire()) {
-          return;
-        }
+    else {
+      // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+      if (!runUserCallbacks()) {
+        // no terminal commander or user-defined command was identified
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       }
-      break;
-
-      case I2C_WRITE: {
-        if (!this->writeTwoWire()) {
-          return;
-        }
-      }
-      break;
-
-      // Scan TwoWire bus to explore and query available devices
-      case I2C_SCAN: {
-        if (this->command.argsLength != 0) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-          return;
-        }
-        this->scanTwoWireBus();
-      }
-      break;
-
-      default: {
-        // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-        if (!runUserCallbacks()) {
-          // no terminal commander or user-defined command was identified
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-        }
-      }
-      break;
     }
   }
 

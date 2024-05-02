@@ -54,13 +54,6 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
-      enum terminal_protocols_t {
-        UNDEFINED = 0,
-        I2C_READ, 
-        I2C_WRITE, 
-        I2C_SCAN, 
-      };
-
       enum error_type_t {
         NoError = 0,
         NoInput, 
@@ -168,9 +161,6 @@
         /** Fixed array for holding hex values to be sent/received via TwoWire/I2C */
         uint8_t twowire[TERM_TWOWIRE_BUFFER_SIZE] = {0};
 
-        /** Protocol type identified for  */
-        terminal_protocols_t protocol;
-
         /** Pointer to first non-space character following a space char in the incoming buffer */
         char *pArgs;
 
@@ -200,8 +190,7 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        terminal_command_t() :
-          protocol(UNDEFINED), 
+        terminal_command_t() : 
           pArgs(nullptr),
           iArgs(0U), 
           cmdLength(0U), 
@@ -281,7 +270,6 @@
          * @returns void
          */
         void initialize(void) {
-          this->protocol    = UNDEFINED;
           this->pArgs       = nullptr;
           this->iArgs       = 0U;
           this->cmdLength   = 0U;
