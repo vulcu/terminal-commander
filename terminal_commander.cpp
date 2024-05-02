@@ -208,88 +208,15 @@ namespace TerminalCommander {
 
     switch (command.protocol) {
       case I2C_READ: {
-        this->pSerial->println(F("I2C Read"));
-        const uint8_t i2c_address =
-          (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
-        this->printTwoWireAddress(i2c_address);
-        const uint8_t i2c_register =
-          (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
-        this->printTwoWireRegister(i2c_register);
-        
-        uint8_t twi_read_index = 0;   // start at zero so we can use the entire buffer for read
-        this->command.flushTwoWire(); // flush the existing twowire buffer of all data
-
-        this->pWire->beginTransmission(i2c_address);
-        this->pWire->write(i2c_register);
-        twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
-        if (error == NACK_ADDRESS) {
-          this->pSerial->println(F("Error: I2C read attempt recieved NACK"));
+        if (!this->readTwoWire()) {
           return;
         }
-        delayMicroseconds(50);
-        this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.argsLength >> 1) - 1));
-        delayMicroseconds(50);
-        while(this->pWire->available()) {
-            if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
-              this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
-              return;
-            }
-            this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
-            twi_read_index++;
-        }
-
-        this->pSerial->print(F("Read Data:"));
-        if (twi_read_index == 0) {
-          this->pSerial->print(F(" No Data Received"));
-        }
-        else {
-          for(uint8_t k = 0; k < twi_read_index; k++) {
-            if (this->command.twowire[k] < 0x10) {
-              this->pSerial->print(F(" 0x0"));
-            }
-            else {
-              this->pSerial->print(F(" 0x"));
-            }
-            this->pSerial->print(this->command.twowire[k], HEX);
-          }
-        }
-        this->pSerial->print('\n');
-
       }
       break;
 
       case I2C_WRITE: {
-        this->pSerial->println(F("I2C Write"));
-        const uint8_t i2c_address =
-          (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
-        this->printTwoWireAddress(i2c_address);
-        const uint8_t i2c_register =
-          (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
-        this->printTwoWireRegister(i2c_register);
-
-        this->pWire->beginTransmission(i2c_address);
-        this->pWire->write(i2c_register);
-        for (uint8_t k = 4; k < this->command.argsLength; k += 2) {
-          this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
-        }
-        twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
-        if (error == NACK_ADDRESS) {
-          this->pSerial->println(F("Error: I2C write attempt recieved NACK"));
+        if (!this->writeTwoWire()) {
           return;
-        }
-        else {
-          this->pSerial->print(F("Write Data:"));
-          for(uint8_t k = 4; k < this->command.argsLength; k += 2) {
-            uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
-            if (write_data < 0x01) {
-              this->pSerial->print(F(" 0x0"));
-            }
-            else {
-              this->pSerial->print(F(" 0x"));
-            }
-            this->pSerial->print(write_data, HEX);
-          }
-          this->pSerial->print('\n');
         }
       }
       break;
@@ -300,8 +227,6 @@ namespace TerminalCommander {
           this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
           return;
         }
-
-        this->pSerial->println(F("Scan I2C Bus for Available Devices"));
         this->scanTwoWireBus();
       }
       break;
@@ -310,7 +235,7 @@ namespace TerminalCommander {
         // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
         if (!runUserCallbacks()) {
           // no terminal commander or user-defined command was identified
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+          this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
         }
       }
       break;
@@ -431,11 +356,98 @@ namespace TerminalCommander {
     this->pSerial->println(i2c_register, HEX);
   }
 
+  bool TerminalCommander::readTwoWire(void) {
+    this->pSerial->println(F("I2C Read"));
+    const uint8_t i2c_address =
+      (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
+    this->printTwoWireAddress(i2c_address);
+    const uint8_t i2c_register =
+      (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
+    this->printTwoWireRegister(i2c_register);
+    
+    uint8_t twi_read_index = 0;   // start at zero so we can use the entire buffer for read
+    this->command.flushTwoWire(); // flush the existing twowire buffer of all data
+
+    this->pWire->beginTransmission(i2c_address);
+    this->pWire->write(i2c_register);
+    twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
+    if (error == NACK_ADDRESS) {
+      this->pSerial->println(F("Error: I2C read attempt recieved NACK"));
+      return false;
+    }
+
+    delayMicroseconds(50);
+    this->pWire->requestFrom(i2c_address, (uint8_t)((this->command.argsLength >> 1) - 1));
+    delayMicroseconds(50);
+    while(this->pWire->available()) {
+      if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
+        this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
+        return false;
+      }
+      this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
+      twi_read_index++;
+    }
+
+    this->pSerial->print(F("Read Data:"));
+    if (twi_read_index == 0) {
+      this->pSerial->print(F(" No Data Received"));
+    }
+    else {
+      for(uint8_t k = 0; k < twi_read_index; k++) {
+        if (this->command.twowire[k] < 0x10) {
+          this->pSerial->print(F(" 0x0"));
+        }
+        else {
+          this->pSerial->print(F(" 0x"));
+        }
+        this->pSerial->print(this->command.twowire[k], HEX);
+      }
+    }
+    this->pSerial->print('\n');
+    return true;
+  }
+
+  bool TerminalCommander::writeTwoWire(void) {
+    this->pSerial->println(F("I2C Write"));
+    const uint8_t i2c_address =
+      (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
+    this->printTwoWireAddress(i2c_address);
+    const uint8_t i2c_register =
+      (uint8_t)((this->command.twowire[2] << 4) + this->command.twowire[3]);
+    this->printTwoWireRegister(i2c_register);
+
+    this->pWire->beginTransmission(i2c_address);
+    this->pWire->write(i2c_register);
+    for (uint8_t k = 4; k < this->command.argsLength; k += 2) {
+      this->pWire->write((16 * this->command.twowire[k]) + this->command.twowire[k+1]);
+    }
+    twi_error_type_t error = (twi_error_type_t)(this->pWire->endTransmission());
+    if (error == NACK_ADDRESS) {
+      this->pSerial->println(F("Error: I2C write attempt recieved NACK"));
+      return false;
+    }
+
+    this->pSerial->print(F("Write Data:"));
+    for(uint8_t k = 4; k < this->command.argsLength; k += 2) {
+      uint8_t write_data = (16 * this->command.twowire[k]) + this->command.twowire[k+1];
+      if (write_data < 0x01) {
+        this->pSerial->print(F(" 0x0"));
+      }
+      else {
+        this->pSerial->print(F(" 0x"));
+      }
+      this->pSerial->print(write_data, HEX);
+    }
+    this->pSerial->print('\n');
+    return true;
+  }
+
   void TerminalCommander::scanTwoWireBus(void) {
+    this->pSerial->println(F("Scan I2C Bus for Available Devices"));
+    this->pSerial->println(F("Scanning for I2C devices..."));
+
     twi_error_type_t error;
     uint8_t device_count = 0;
-
-    this->pSerial->println(F("Scanning for I2C devices..."));
 
     for(uint8_t address = 1; address <= 127; address++ ) {
       // This uses the return value of Write.endTransmisstion to

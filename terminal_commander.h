@@ -394,6 +394,26 @@
         * @param   param    Description of the input parameter
         * @returns uint16_t Total valid character count of incoming buffer
         */
+        bool readTwoWire(void);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @param   param    Description of the input parameter
+        * @returns uint16_t Total valid character count of incoming buffer
+        */
+        bool writeTwoWire(void);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @param   param    Description of the input parameter
+        * @returns uint16_t Total valid character count of incoming buffer
+        */
         void scanTwoWireBus(void);
 
         /*! @brief  Error-check the incoming ASCII command string
