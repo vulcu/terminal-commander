@@ -173,15 +173,15 @@ namespace TerminalCommander {
         (this->command.data[1] == '2' || this->command.data[1] == '@') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
 
+      // if command was sent without spaces then set correct length for command and args
+      if (this->command.cmdLength != 4U) {
+        this->command.cmdLength = 4U;
+        this->command.argsLength = data_index - 4U;
+      }
+
       // test if buffer represents hex value pairs and convert these from ASCII to hex
       if (!this->parseTwoWireData()) {
         return;
-      }
-
-      // if command was sent without spaces then set correct length for command and args
-      if (this->command.argsLength == 0) {
-        this->command.cmdLength = 4U;
-        this->command.argsLength = data_index - 4U;
       }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
@@ -404,14 +404,14 @@ namespace TerminalCommander {
 
   bool TerminalCommander::parseTwoWireData(void) {
     // TwoWire commands require more strict validation and parsing
-    uint8_t idx = this->command.cmdLength;
+    uint8_t idx = 0;
     for ( ; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
-      if (this->command.data[idx] == '\0') {
+      if (this->command.data[idx + this->command.cmdLength] == '\0') {
         // end of serial input data has been reached
         break;
       }
       else {
-        this->command.twowire[idx] = (uint8_t)this->command.data[idx];
+        this->command.twowire[idx] = (uint8_t)this->command.data[idx + this->command.cmdLength];
       }
 
       if ((this->command.twowire[idx] > 96U) && (this->command.twowire[idx] < 103U)) {
@@ -434,7 +434,7 @@ namespace TerminalCommander {
       }
     }
 
-    if (idx < 7) {
+    if (idx < 3) {
       // command length does not contain an address and a register
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCmdLength), this->lastError.message);
       return false;
