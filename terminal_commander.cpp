@@ -179,7 +179,7 @@ namespace TerminalCommander {
     }
 
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
-        (this->command.data[1] == '2' || this->command.data[1] == '@') &&
+        (this->command.data[1] == '2') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
 
       // set correct length for command and args if command sent without spaces or badly formatted
