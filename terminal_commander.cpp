@@ -188,10 +188,6 @@ namespace TerminalCommander {
         this->command.protocol = I2C_READ;
       }
       else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
-        if (command.argsLength < 6U) {
-          this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
-          return;
-        }
         this->command.protocol = I2C_WRITE;
       }
       else {
@@ -408,6 +404,11 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::writeTwoWire(void) {
+    if (command.argsLength < 6U) {
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
+      return;
+    }
+
     this->pSerial->println(F("I2C Write"));
     const uint8_t i2c_address =
       (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
@@ -443,8 +444,7 @@ namespace TerminalCommander {
   }
 
   void TerminalCommander::scanTwoWireBus(void) {
-    this->pSerial->println(F("Scan I2C Bus for Available Devices"));
-    this->pSerial->println(F("Scanning for I2C devices..."));
+    this->pSerial->println(F("Scanning for available I2C devices..."));
 
     twi_error_type_t error;
     uint8_t device_count = 0;
