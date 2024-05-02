@@ -132,7 +132,7 @@ namespace TerminalCommander {
   bool TerminalCommander::serialCommandProcessor(void) {
     if (!this->isRxBufferDataValid()) {
       return false;
-    }    
+    }
 
     // remove spaces from incoming serial command
     uint8_t data_index = 0;
@@ -181,14 +181,7 @@ namespace TerminalCommander {
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
         (this->command.data[1] == '2') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
-
-      // set correct length for command and args if command sent without spaces or badly formatted
-      if (this->command.cmdLength != 4U) {
-        this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
-        this->command.cmdLength = 4U;
-      }
-
-      // test if buffer represents hex value pairs and convert these from ASCII to hex
+      // TwoWire commands require more strict validation and parsing
       if (!this->parseTwoWireData()) {
         return false;
       }
@@ -210,10 +203,10 @@ namespace TerminalCommander {
       return this->scanTwoWireBus();
     }
 
-      // no terminal commander or user-defined command was identified
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
-      return false;
-    }
+    // no terminal commander or user-defined command was identified
+    this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+    return false;
+  }
 
   bool TerminalCommander::isRxBufferDataValid(void) {
     // check validity of input command characters before parsing commands
@@ -267,7 +260,18 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::parseTwoWireData(void) {
-    // TwoWire commands require more strict validation and parsing
+    if ((this->command.cmdLength + command.argsLength) < 4U) {
+      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+      return false;
+    }
+
+    // set correct length for command and args if command sent without spaces or badly formatted
+    if (this->command.cmdLength != 4U) {
+      this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
+      this->command.cmdLength = 4U;
+    }
+  
+    // convert buffer from from ASCII to hex and check if it contains hex value pairs
     uint8_t idx = 0;
     for ( ; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
       if (this->command.data[idx + this->command.cmdLength] == '\0') {
