@@ -72,18 +72,22 @@ namespace TerminalCommander {
 
       // get the new byte
       char c = (char)this->pSerial->read();
-      if ((uint8_t)c == 0x08) {
-        // control character 0x08 = backspace
+
+      // Could add handling here for ASCII '27' escape sequence indicator e.g.
+      // ESC[A = VT100 Up Cursor Key      ESC[B = VT100 Down Cursor Key
+      // ESC[C = VT100 Right Cursor Key   ESC[D = VT100 Left Cursor Key
+      if ((uint8_t)c == 8U) {
+        // ASCII character '8' is backspace
         this->command.previous();
+        if (this->isEchoEnabled) {
+          this->pSerial->print((char)8U);
+        }
       }
-      // if (c == "[C") {
-      //   // control character ESC[C = VT100 Right Cursor Key
-      // }
-      // if (c == "[D") {
-      //   // control character ESC[D = VT100 Left Cursor Key
-      // }
       else {
         this->command.next(c);
+        if (this->isEchoEnabled) {
+          this->pSerial->print(c);
+        }
       }
     };
 
@@ -122,6 +126,10 @@ namespace TerminalCommander {
       this->isNewTerminalCommandPrompt = false;
       this->pSerial->print(F(">> "));
     }
+  }
+
+  void TerminalCommander::echo(bool enable_terminal_echo) {
+    this->isEchoEnabled = enable_terminal_echo;
   }
 
   void TerminalCommander::onCommand(const char* command, user_callback_char_fn_t callback) {

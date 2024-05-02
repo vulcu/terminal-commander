@@ -312,6 +312,12 @@
         */
         void loop(void);
 
+        /*! @brief  Execute incoming serial string by command or protocol type
+        *
+        * @details Detailed description here.
+        */
+        void echo(bool);
+
         /*! @brief  Add callback function for specific command.
         *
         * @details Usage:
@@ -324,6 +330,7 @@
       private:
         TerminalCommanderTypes::user_callback_char_t userCharCallbacks[MAX_USER_COMMANDS] = {};
         uint8_t numUserCharCallbacks = 0;
+        bool isEchoEnabled = false;
         bool isNewTerminalCommandPrompt = true;
 
         TerminalCommanderTypes::error_t lastError;
