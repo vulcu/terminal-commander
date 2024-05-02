@@ -173,6 +173,11 @@ namespace TerminalCommander {
     }
     this->command.argsLength = data_index - this->command.cmdLength;
 
+    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+    if (this->runUserCallbacks()) {
+      return true;
+    }
+
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
         (this->command.data[1] == '2' || this->command.data[1] == '@') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
@@ -205,13 +210,10 @@ namespace TerminalCommander {
       return this->scanTwoWireBus();
     }
 
-    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-    if (!runUserCallbacks()) {
       // no terminal commander or user-defined command was identified
       this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
       return false;
     }
-  }
 
   bool TerminalCommander::isRxBufferDataValid(void) {
     // check validity of input command characters before parsing commands
