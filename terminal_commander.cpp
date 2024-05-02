@@ -101,9 +101,10 @@ namespace TerminalCommander {
         }
       }
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
-      this->pSerial->println(this->lastError.message);
+      this->pSerial->print(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
+      this->isNewTerminalCommandPrompt = true;
     }
     else if (this->command.complete) {
       this->serialCommandProcessor();
@@ -112,10 +113,15 @@ namespace TerminalCommander {
         this->pSerial->print(this->lastError.message);
         this->lastError.clear();
       }
-      this->pSerial->print(F(">> "));
 
       // clear the input buffer array and reset serial logic
       this->command.reset();
+      this->isNewTerminalCommandPrompt = true;
+    }
+
+    if (this->isNewTerminalCommandPrompt) {
+      this->isNewTerminalCommandPrompt = false;
+      this->pSerial->print(F(">> "));
     }
   }
 

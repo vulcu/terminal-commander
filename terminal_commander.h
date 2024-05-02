@@ -323,6 +323,7 @@
       private:
         TerminalCommanderTypes::user_callback_char_t userCharCallbacks[MAX_USER_COMMANDS] = {};
         uint8_t numUserCharCallbacks = 0;
+        bool isNewTerminalCommandPrompt = true;
 
         TerminalCommanderTypes::error_t lastError;
         TerminalCommanderTypes::terminal_command_t command;
