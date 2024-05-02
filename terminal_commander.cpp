@@ -359,27 +359,27 @@ namespace TerminalCommander {
     uint16_t idx;
     for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
       // check input serial buffer is only alpha-numeric characters
-      if (((uint8_t)this->command.serialRx[idx] > 96) && ((uint8_t)this->command.serialRx[idx] < 122)) {
+      if (((uint8_t)this->command.serialRx[idx] > 96U) && ((uint8_t)this->command.serialRx[idx] < 122U)) {
         // these are lower-case letters [a-z]
       }
-      else if (((uint8_t)this->command.serialRx[idx] > 47) && ((uint8_t)this->command.serialRx[idx] < 58)) {
+      else if (((uint8_t)this->command.serialRx[idx] > 47U) && ((uint8_t)this->command.serialRx[idx] < 58U)) {
         // these are numbers [0-9]
       }
-      else if (((uint8_t)this->command.serialRx[idx] > 64) && ((uint8_t)this->command.serialRx[idx] < 91)) {
+      else if (((uint8_t)this->command.serialRx[idx] > 64U) && ((uint8_t)this->command.serialRx[idx] < 91U)) {
         // these are upper-case letters [A-Z]
       }
-      else if ((uint8_t)this->command.serialRx[idx] == 45) {
+      else if ((uint8_t)this->command.serialRx[idx] == 45U) {
         // this is the '-' symbol which could be indicating a negative value
       }
-      else if ((uint8_t)this->command.serialRx[idx] == 46) {
+      else if ((uint8_t)this->command.serialRx[idx] == 46U) {
         // this is the '.' symbol which could be indicating a decimal value
       }
-      else if ((uint8_t)this->command.serialRx[idx] == 44) {
+      else if ((uint8_t)this->command.serialRx[idx] == 44U) {
         // this is the ',' symbol which could be indicating separated values
       }
-      else if (((uint8_t)this->command.serialRx[idx] == 10) || 
-              ((uint8_t)this->command.serialRx[idx] == 13) ||  
-              ((uint8_t)this->command.serialRx[idx] == 32)) {
+      else if (((uint8_t)this->command.serialRx[idx] == 10U) || 
+              ((uint8_t)this->command.serialRx[idx] == 13U) ||  
+              ((uint8_t)this->command.serialRx[idx] == 32U)) {
         // this is a space character which could be indicating separated parameters
       }
       else if (this->command.serialRx[idx] == '\0') {
@@ -404,7 +404,7 @@ namespace TerminalCommander {
 
   bool TerminalCommander::parseTwoWireData(void) {
     // TwoWire commands require more strict validation and parsing
-    uint16_t idx = 4;
+    uint8_t idx = this->command.cmdLength;
     for ( ; idx < ((uint8_t)sizeof(this->command.twowire)); idx++) {
       if (this->command.data[idx] == '\0') {
         // end of serial input data has been reached
@@ -414,16 +414,16 @@ namespace TerminalCommander {
         this->command.twowire[idx] = (uint8_t)this->command.data[idx];
       }
 
-      if ((this->command.twowire[idx] > 96) && (this->command.twowire[idx] < 103)) {
+      if ((this->command.twowire[idx] > 96U) && (this->command.twowire[idx] < 103U)) {
         // check for lower-case letters [a-f] and convert to upper-case
         this->command.twowire[idx] -= 32;
       }
 
-      if ((this->command.twowire[idx] > 47) && (this->command.twowire[idx] < 58)) {
+      if ((this->command.twowire[idx] > 47U) && (this->command.twowire[idx] < 58U)) {
         // check for numbers [0-9] and convert ASCII value to numeric
         this->command.twowire[idx] -= 48;
       }
-      else if ((this->command.twowire[idx] > 64) && (this->command.twowire[idx] < 71)) {
+      else if ((this->command.twowire[idx] > 64U) && (this->command.twowire[idx] < 71U)) {
           // check for upper-case letters [A-F] and convert ASCII to numeric
           this->command.twowire[idx] -= 55;  //subract 65, but add 10 because A == 10
       }
@@ -435,7 +435,7 @@ namespace TerminalCommander {
     }
 
     if (idx < 7) {
-      // command buffer is empty
+      // command length does not contain an address and a register
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCmdLength), this->lastError.message);
       return false;
     }
