@@ -28,7 +28,59 @@ int strcmp(const char *s1, const char *s2) {
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
-  
+  // put common error messages into Program memory to save SRAM space
+  static const char strErrNoError[] PROGMEM = "No Error\n";
+  static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
+  static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
+  static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
+  static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
+  static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
+  static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
+  static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
+  static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
+  static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
+  static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
+  static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
+
+  const char *const Error::string_error_table[] PROGMEM = 
+  {
+    strErrNoError,
+    strErrNoInput, 
+    strErrUndefinedUserFunctionPtr, 
+    strErrUnrecognizedInput, 
+    strErrInvalidSerialCmdLength, 
+    strErrIncomingTwoWireReadLength,
+    strErrInvalidTwoWireCharacter, 
+    strErrInvalidTwoWireCmdLength, 
+    strErrInvalidTwoWireWriteData, 
+    strErrInvalidHexValuePair, 
+    strErrUnrecognizedProtocol, 
+    strErrUnrecognizedI2CTransType
+  };
+
+  /** Fixed array for raw incoming serial rx data */
+  Error::Error(void):
+    flag(false), 
+    warning(false), 
+    type(NoError) {};
+
+  void Error::set(TerminalCommanderTypes::error_type_t error_type) {
+    this->flag = true;
+    this->type = error_type;
+    memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
+    strcpy_P(message, (char *)pgm_read_word(&(this->string_error_table[error_type])));
+  }
+
+  void Error::clear(void) {
+    this->flag    = false;
+    this->warning = false;
+    this->type    = NoError;
+  }
+
+  void Error::reset(void) {
+    this->clear();
+    memset(this->message,  '\0', sizeof(this->message));
+  }
 
   Command::Command(void): 
     pArgs(nullptr),

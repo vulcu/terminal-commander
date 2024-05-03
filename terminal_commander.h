@@ -55,34 +55,14 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
-      // put common error messages into Program memory to save SRAM space
-      static const char strErrNoError[] PROGMEM = "No Error\n";
-      static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
-      static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
-      static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
-      static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
-      static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
-      static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
-      static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
-      static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
-      static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
-      static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
-      static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
-
-      static const char *const string_error_table[] PROGMEM = 
-      {
-        strErrNoError,
-        strErrNoInput, 
-        strErrUndefinedUserFunctionPtr, 
-        strErrUnrecognizedInput, 
-        strErrInvalidSerialCmdLength, 
-        strErrIncomingTwoWireReadLength,
-        strErrInvalidTwoWireCharacter, 
-        strErrInvalidTwoWireCmdLength, 
-        strErrInvalidTwoWireWriteData, 
-        strErrInvalidHexValuePair, 
-        strErrUnrecognizedProtocol, 
-        strErrUnrecognizedI2CTransType
+      /**
+       * @brief Use this struct to hold error and warning context
+       *
+       * @details A more elaborate description of the constructor.
+       */
+      struct user_callback_char_t {
+        const char* command;
+        user_callback_char_fn_t callback; // could be pointer?
       };
 
       enum error_type_t {
@@ -108,18 +88,10 @@
         OTHER, 
         TIME_OUT
       };
+    }
 
-      /**
-       * @brief Use this struct to hold error and warning context
-       *
-       * @details A more elaborate description of the constructor.
-       */
-      struct user_callback_char_t {
-        const char* command;
-        user_callback_char_fn_t callback; // could be pointer?
-      };
-
-      struct error_t {
+    class Error {
+      public:
         /** Fixed array for raw incoming serial rx data */
         bool flag;
 
@@ -127,13 +99,16 @@
         bool warning;
 
         /** Fixed array for raw incoming serial rx data */
-        error_type_t type;
+        TerminalCommanderTypes::error_type_t type;
 
         /** Fixed array for raw incoming serial rx data */
         char message[TERM_ERROR_MESSAGE_SIZE + 1] = {'\0'};
 
-        /** Fixed array for raw incoming serial rx data */
-        error_t () : flag(false), warning(false), type(NoError) {};
+        /*! @brief Class constructor
+        *
+        * @details A more elaborate description of the constructor.
+        */
+        Error(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -143,12 +118,7 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        void set(error_type_t error_type) {
-          this->flag = true;
-          this->type = error_type;
-          memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
-          strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error_type])));
-        }
+        void set(TerminalCommanderTypes::error_type_t error_type);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -158,11 +128,7 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        void clear(void) {
-          this->flag    = false;
-          this->warning = false;
-          this->type    = NoError;
-        }
+        void clear(void);
 
         /**
          * @brief Use this struct to build and config terminal command data.
@@ -172,12 +138,12 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        void reset(void) {
-          this->clear();
-          memset(this->message,  '\0', sizeof(this->message));
-        }
+        void reset(void);
+
+        private:
+          /** Array of char pointers for storing error messages in PROGMEM */
+          static const char *const string_error_table[] PROGMEM;
       };
-    }
 
     class Command {
       public:
@@ -318,8 +284,7 @@
         bool isEchoEnabled = false;
         bool isNewTerminalCommandPrompt = true;
 
-        TerminalCommanderTypes::error_t lastError;
-
+        Error lastError;
         Command command;
         Stream *pSerial;
         TwoWire *pWire;
