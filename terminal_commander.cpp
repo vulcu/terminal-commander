@@ -192,48 +192,15 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::serialCommandProcessor(void) {
+    // check validity of incoming buffer data
     if (!this->isRxBufferDataValid()) {
       return false;
     }
 
-    // remove spaces from incoming serial command
-    uint8_t data_index = 0;
-    for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
-      // remove whitespace from input character string
-      if (!isSpace(this->command.serialRx[serialrx_index])) {
-        if (this->command.serialRx[serialrx_index] == '\0') {
-          // end of serial input data has been reached
-          if (data_index == 0U) {
-            // input serial buffer is empty
-            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+    // create a copy of the buffer without whitespace for easier parsing
+    if (!this->removeSpaces()) {
             return false;
           }
-
-          if (this->command.cmdLength == 0U) {
-            // serial buffer is not empty but command did not have any spaces
-            this->command.cmdLength = data_index;
-          }
-          break;
-        }
-        else {
-          this->command.data[data_index] = this->command.serialRx[serialrx_index];
-        }
-        data_index++;
-      }
-      else if ((this->command.pArgs == nullptr) && 
-               (data_index != 0U) && 
-               (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
-        // Store pointer to next char character after the 1st space to enable passing user args
-        this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
-
-        // Store index corresponding to pointer location since it is start index of user args
-        this->command.iArgs = serialrx_index;
-
-        // Space character is treated as delimiter for commands even if not a user command
-        this->command.cmdLength = data_index;
-      }
-    }
-    this->command.argsLength = data_index - this->command.cmdLength;
 
     // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
     if (this->runUserCallbacks()) {
@@ -321,11 +288,91 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::parseTwoWireData(void) {
-    if ((this->command.cmdLength + command.argsLength) < 4U) {
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+  bool TerminalCommander::removeSpaces(void) {
+    uint8_t data_index = 0;
+
+    // create a copy of the serialRx buffer with whitespace removed for easier parsing
+    for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
+      if (!isSpace(this->command.serialRx[serialrx_index])) {
+        if (this->command.serialRx[serialrx_index] == '\0') {
+          // end of serial input data has been reached
+          if (data_index == 0U) {
+            // input serial buffer is empty
+            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
       return false;
     }
+
+          if (this->command.cmdLength == 0U) {
+            // serial buffer is not empty but command did not have any spaces
+            this->command.cmdLength = data_index;
+          }
+          break;
+        }
+        else {
+          this->command.data[data_index] = this->command.serialRx[serialrx_index];
+        }
+        data_index++;
+      }
+      else if ((this->command.pArgs == nullptr) && 
+               (data_index != 0U) && 
+               (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
+        // Store pointer to next char character after the 1st space to enable passing user args
+        this->command.pArgs = (char*)(&this->command.serialRx[serialrx_index]) + 1;
+
+        // Store index corresponding to pointer location since it is start index of user args
+        this->command.iArgs = serialrx_index;
+
+        // Space character is treated as delimiter for commands even if not a user command
+        this->command.cmdLength = data_index;
+      }
+    }
+    this->command.argsLength = data_index - this->command.cmdLength;
+    return true;
+  }
+
+  bool TerminalCommander::runUserCallbacks(void) {
+    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
+    if (this->command.pArgs != nullptr) {
+      char user_command[this->command.cmdLength + 1] = {'\0'};
+      memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
+      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+        if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
+          // remove leading whitespace
+          while (*this->command.pArgs != '\0' && isSpace(this->command.pArgs[0])) {
+            this->command.pArgs++;
+            this->command.iArgs++;
+          }
+
+          // get char count for user args not including trailing whitespace/terminators
+          uint8_t user_args_length = 0;
+          for (uint8_t k = TERM_CHAR_BUFFER_SIZE; k > this->command.iArgs; k--) {
+            if ((this->command.serialRx[k] != '\0') && !isSpace(this->command.serialRx[k])) {
+              user_args_length = k - this->command.iArgs;
+              break;
+            }
+          }
+
+          this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
+          return true;
+        }
+      }
+    }
+    else {
+      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
+        if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
+          this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool TerminalCommander::parseTwoWireData(void) {
+    // if ((this->command.cmdLength + command.argsLength) < 4U) {
+    //   this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+    //   return false;
+    // }
 
     // set correct length for command and args if command sent without spaces or badly formatted
     if (this->command.cmdLength != 4U) {
@@ -508,44 +555,6 @@ namespace TerminalCommander {
       pSerial->println(F(" devices found!"));
     }
     return true;
-  }
-
-  bool TerminalCommander::runUserCallbacks(void) {
-    // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
-    if (this->command.pArgs != nullptr) {
-      char user_command[this->command.cmdLength + 1] = {'\0'};
-      memcpy(user_command, this->command.data, (size_t)(this->command.cmdLength));
-      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-        if (strcmp(user_command, this->userCharCallbacks[k].command) == 0) {
-          // remove leading whitespace
-          while (*this->command.pArgs != '\0' && isSpace(this->command.pArgs[0])) {
-            this->command.pArgs++;
-            this->command.iArgs++;
-          }
-
-          // get char count for user args not including trailing whitespace/terminators
-          uint8_t user_args_length = 0;
-          for (uint8_t k = TERM_CHAR_BUFFER_SIZE; k > this->command.iArgs; k--) {
-            if ((this->command.serialRx[k] != '\0') && !isSpace(this->command.serialRx[k])) {
-              user_args_length = k - this->command.iArgs;
-              break;
-            }
-          }
-
-          this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
-          return true;
-        }
-      }
-    }
-    else {
-      for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
-        if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
-          this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {

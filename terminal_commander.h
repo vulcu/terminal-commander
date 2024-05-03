@@ -310,6 +310,26 @@
         */
         bool isRxBufferDataValid(void);
 
+        /**
+         * @brief Use this struct to build and config terminal command data.
+         *
+         * @details A more elaborate description of the constructor.
+         * 
+         * @param   void
+         * @returns void
+         */
+        bool removeSpaces(void);
+
+        /*! @brief  Error-check the incoming ASCII command string
+        *
+        * @details Detailed description here.
+        * 
+        * @param   param    Description of the input parameter
+        * @param   param    Description of the input parameter
+        * @returns uint16_t Total valid character count of incoming buffer
+        */
+        bool runUserCallbacks(void);
+
         /*! @brief  Parse and error-check the incoming TwoWire command string
         *
         * @details Detailed description here.
@@ -348,16 +368,6 @@
         * @returns uint16_t Total valid character count of incoming buffer
         */
         bool scanTwoWireBus(void);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
-        bool runUserCallbacks(void);
 
         /*! @brief  Return the integer represented by a character array
         *
