@@ -55,6 +55,36 @@
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
       // typedef std::function<void(uint8_t)> cmd_callback_t
 
+      // put common error messages into Program memory to save SRAM space
+      static const char strErrNoError[] PROGMEM = "No Error\n";
+      static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
+      static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
+      static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
+      static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
+      static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
+      static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
+      static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
+      static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
+      static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
+      static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
+      static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
+
+      static const char *const string_error_table[] PROGMEM = 
+      {
+        strErrNoError,
+        strErrNoInput, 
+        strErrUndefinedUserFunctionPtr, 
+        strErrUnrecognizedInput, 
+        strErrInvalidSerialCmdLength, 
+        strErrIncomingTwoWireReadLength,
+        strErrInvalidTwoWireCharacter, 
+        strErrInvalidTwoWireCmdLength, 
+        strErrInvalidTwoWireWriteData, 
+        strErrInvalidHexValuePair, 
+        strErrUnrecognizedProtocol, 
+        strErrUnrecognizedI2CTransType
+      };
+
       enum error_type_t {
         NoError = 0,
         NoInput, 
@@ -113,10 +143,11 @@
          * @param   void
          * @returns Description of the returned parameter
          */
-        error_type_t set(error_type_t error_type) {
+        void set(error_type_t error_type) {
           this->flag = true;
           this->type = error_type;
-          return this->type;
+          memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
+          strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error_type])));
         }
 
         /**
@@ -387,15 +418,6 @@
         * @returns void
         */
         void printTwoWireRegister(uint8_t i2c_register);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
-        * @returns void
-        */
-        void writeErrorMsgToSerialBuffer(TerminalCommanderTypes::error_type_t error, char *message);
     };
   }
 #endif

@@ -28,35 +28,7 @@ int strcmp(const char *s1, const char *s2) {
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
-  // put common error messages into Program memory to save SRAM space
-  static const char strErrNoError[] PROGMEM = "No Error\n";
-  static const char strErrNoInput[] PROGMEM = "Error: No Input\n";
-  static const char strErrUndefinedUserFunctionPtr[] PROGMEM = "Error: USER function is not defined (null pointer)\n";
-  static const char strErrUnrecognizedInput[] PROGMEM = "Error: Unrecognized Input Character\n";
-  static const char strErrInvalidSerialCmdLength[] PROGMEM = "\nError: Serial Command Length Exceeds Limit\n";
-  static const char strErrIncomingTwoWireReadLength[] PROGMEM = "Error: Incoming TwoWire Data Exceeds Read Buffer\n";
-  static const char strErrInvalidTwoWireCharacter[] PROGMEM = "Error: Invalid TwoWire Command Character\n";
-  static const char strErrInvalidTwoWireCmdLength[] PROGMEM = "Error: TwoWire Command requires Address and Register\n";
-  static const char strErrInvalidTwoWireWriteData[] PROGMEM = "Error: No data provided for write to I2C registers\n";
-  static const char strErrInvalidHexValuePair[] PROGMEM = "Error: Commands must be in hex value pairs\n";
-  static const char strErrUnrecognizedProtocol[] PROGMEM = "Error: Unrecognized Protocol\n";
-  static const char strErrUnrecognizedI2CTransType[] PROGMEM = "Error: Unrecognized I2C transaction type\n";
-
-  static const char *const string_error_table[] PROGMEM = 
-  {
-    strErrNoError,
-    strErrNoInput, 
-    strErrUndefinedUserFunctionPtr, 
-    strErrUnrecognizedInput, 
-    strErrInvalidSerialCmdLength, 
-    strErrIncomingTwoWireReadLength,
-    strErrInvalidTwoWireCharacter, 
-    strErrInvalidTwoWireCmdLength, 
-    strErrInvalidTwoWireWriteData, 
-    strErrInvalidHexValuePair, 
-    strErrUnrecognizedProtocol, 
-    strErrUnrecognizedI2CTransType
-  };
+  
 
   Command::Command(void): 
     pArgs(nullptr),
@@ -158,7 +130,7 @@ namespace TerminalCommander {
         // wait to see if another new character will arrive
         delayMicroseconds(TERM_MICROSEC_PER_CHAR);
       }
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidSerialCmdLength), this->lastError.message);
+      this->lastError.set(InvalidSerialCmdLength);
       this->pSerial->print(this->lastError.message);
       this->lastError.clear();
       this->command.reset();
@@ -219,7 +191,7 @@ namespace TerminalCommander {
         return this->writeTwoWire();
       }
 
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
+      this->lastError.set(UnrecognizedI2CTransType);
       return false;
     }
     else if ((this->command.data[0] == 's' || this->command.data[0] == 'S') &&
@@ -230,7 +202,7 @@ namespace TerminalCommander {
     }
 
     // no terminal commander or user-defined command was identified
-    this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+    this->lastError.set(UnrecognizedProtocol);
     return false;
   }
 
@@ -271,14 +243,14 @@ namespace TerminalCommander {
       }
       else {
         // an input buffer value was unrecognized
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedInput), this->lastError.message);
+        this->lastError.set(UnrecognizedInput);
         return false;
       }
     }
 
     if (idx == 0) {
       // input serial buffer is empty
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+      this->lastError.set(NoInput);
       return false;
     }
 
@@ -295,7 +267,7 @@ namespace TerminalCommander {
           // end of serial input data has been reached
           if (data_index == 0U) {
             // input serial buffer is empty
-            this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
+            this->lastError.set(NoInput);
             return false;
           }
 
@@ -366,11 +338,6 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::parseTwoWireData(void) {
-    // if ((this->command.cmdLength + command.argsLength) < 4U) {
-    //   this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedI2CTransType), this->lastError.message);
-    //   return false;
-    // }
-
     // set correct length for command and args if command sent without spaces or badly formatted
     if (this->command.cmdLength != 4U) {
       this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
@@ -403,19 +370,19 @@ namespace TerminalCommander {
       }
       else {
         // an command character is invalid or unrecognized
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCharacter), this->lastError.message);
+        this->lastError.set(InvalidTwoWireCharacter);
         return false;
       }
     }
 
     if (idx < 3) {
       // command length does not contain an address and a register
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireCmdLength), this->lastError.message);
+      this->lastError.set(InvalidTwoWireCmdLength);
       return false;
     }
     else if ((idx >> 1) != ((idx + 1) >> 1)) {
       // command buffer does not specify hex values in multiples of 8 bits
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidHexValuePair), this->lastError.message);
+      this->lastError.set(InvalidHexValuePair);
       return false;
     }
 
@@ -452,7 +419,7 @@ namespace TerminalCommander {
     delayMicroseconds(50U);
     while(this->pWire->available()) {
       if (twi_read_index >= TERM_TWOWIRE_BUFFER_SIZE) {
-        this->writeErrorMsgToSerialBuffer(this->lastError.set(IncomingTwoWireReadLength), this->lastError.message);
+        this->lastError.set(IncomingTwoWireReadLength);
         return false;
       }
       this->command.twowire[twi_read_index] = (uint8_t)this->pWire->read();
@@ -485,7 +452,7 @@ namespace TerminalCommander {
     }
 
     if (command.argsLength < 6U) {
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
+      this->lastError.set(InvalidTwoWireWriteData);
       return;
     }
 
@@ -527,7 +494,7 @@ namespace TerminalCommander {
     // this command does not accept additional arguments
     if ((this->command.argsLength + this->command.cmdLength) > 4U) {
       /// TODO: this could be a warning instead of an error
-      this->writeErrorMsgToSerialBuffer(this->lastError.set(UnrecognizedProtocol), this->lastError.message);
+      this->lastError.set(UnrecognizedProtocol);
       return false;
     }
 
@@ -582,11 +549,5 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
-  }
-
-  /// TODO: move as much of this as possible into an error_t member
-  void TerminalCommander::writeErrorMsgToSerialBuffer(error_type_t error, char *message) {
-    memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
-    strcpy_P(message, (char *)pgm_read_word(&(string_error_table[error])));
   }
 }
