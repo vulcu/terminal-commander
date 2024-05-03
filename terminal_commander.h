@@ -129,6 +129,16 @@
          * @param   void
          * @returns Description of the returned parameter
          */
+        void warn(TerminalCommanderTypes::error_type_t error_type);
+
+        /**
+         * @brief Use this struct to build and config terminal command data.
+         *
+         * @details A more elaborate description of the constructor.
+         * 
+         * @param   void
+         * @returns Description of the returned parameter
+         */
         void clear(void);
 
         /**

@@ -71,6 +71,11 @@ namespace TerminalCommander {
     strcpy_P(message, (char *)pgm_read_word(&(this->string_error_table[error_type])));
   }
 
+  void Error::warn(TerminalCommanderTypes::error_type_t error_type) {
+    this->warning = true;
+    this->set(error_type);
+  }
+
   void Error::clear(void) {
     this->flag    = false;
     this->warning = false;
