@@ -49,23 +49,27 @@
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
-      // the following only works for lambda expressions that do NOT capture local variables, e.g. [](){}
-      typedef void (*user_callback_char_fn_t)(char*, size_t);
+      /// @brief User char* callback lambda expression that does not capture local variables
+      typedef void (user_callback_char_fn_t)(char*, size_t);
 
       // alt: the following works for lambda expressions that capture local variables
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
-      // typedef std::function<void(uint8_t)> cmd_callback_t
+      // typedef std::function<void(char*, size_t)> user_callback_char_fn_t
 
       /**
-       * @brief Use this struct to hold error and warning context
+       * @struct user_callback_char_t "terminal_commander.h"
+       * @brief Use this struct to hold user commands and callback fn
        *
-       * @details A more elaborate description of the constructor.
+       * @details This struct holds a single user command (as created by
+       *          TerminalCommander::onCommand() for a callback function 
+       *          matching the type user_callback_char_fn_t
        */
       struct user_callback_char_t {
-        const char* command;
-        user_callback_char_fn_t callback; // could be pointer?
+        const char *command;
+        user_callback_char_fn_t *callback; // could be pointer?
       };
 
+      /// @brief Index of the string error table array
       enum error_type_t {
         NoError = 0,
         NoInput, 
@@ -81,6 +85,7 @@
         UnrecognizedI2CTransType, 
       };
 
+      /// @brief Error names returned by Wire.endTransmission()
       enum twi_error_type_t {
         NO_ERROR = 0,
         TX_BUFFER_OVERFLOW, 
@@ -91,63 +96,68 @@
       };
     }
 
+    /**
+     * @class Error "terminal_commander.h"
+     * @brief Terminal Commander error states and messages
+     */
     class Error {
       public:
-        /** Fixed array for raw incoming serial rx data */
+        /** True if an error or warning has been set */
         bool flag;
 
-        /** Fixed array for raw incoming serial rx data */
+        /** True if the error set should be treated as a warning */
         bool warning;
 
-        /** Fixed array for raw incoming serial rx data */
+        /** Enum indexing the string_error_table array */
         TerminalCommanderTypes::error_type_t type;
 
-        /** Fixed array for raw incoming serial rx data */
+        /** Char array for holding the terminal error message */
         char message[TERM_ERROR_MESSAGE_SIZE + 1] = {'\0'};
 
-        /*! @brief Class constructor
+        /*! @brief Construct an instance of the Error class
         *
-        * @details A more elaborate description of the constructor.
+        * @details Constructor for Error class, takes no arguments
         */
         Error(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Set a new error message and raise the error flag
          *
-         * @details A more elaborate description of the constructor.
+         * @details Set with set the error message using the string_error_table
+         *          and will flag that an error has occured by setting flag = true.
          * 
-         * @param   void
-         * @returns Description of the returned parameter
+         * @param   error_type_t TerminalCommanderTypes::error_type_t
+         * @returns void
          */
         void set(TerminalCommanderTypes::error_type_t error_type);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Set a new error message and raise error and warning flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Warn will set warning = true before calling set()
          * 
-         * @param   void
-         * @returns Description of the returned parameter
+         * @param   error_type_t TerminalCommanderTypes::error_type_t
+         * @returns void
          */
         void warn(TerminalCommanderTypes::error_type_t error_type);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear error type and all flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Set error type to 'NO_ERROR' and all flags to 'false'
          * 
          * @param   void
-         * @returns Description of the returned parameter
+         * @returns void
          */
         void clear(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear error type, error message, and all flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Calls clear() then sets message array to '\0'
          * 
          * @param   void
-         * @returns Description of the returned parameter
+         * @returns void
          */
         void reset(void);
 
