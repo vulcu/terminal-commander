@@ -199,8 +199,8 @@ namespace TerminalCommander {
 
     // create a copy of the buffer without whitespace for easier parsing
     if (!this->removeSpaces()) {
-            return false;
-          }
+      return false;
+    }
 
     // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
     if (this->runUserCallbacks()) {
@@ -210,10 +210,6 @@ namespace TerminalCommander {
     if ((this->command.data[0] == 'i' || this->command.data[0] == 'I') &&
         (this->command.data[1] == '2') &&
         (this->command.data[2] == 'c' || this->command.data[2] == 'C')) {
-      // TwoWire commands require more strict validation and parsing
-      if (!this->parseTwoWireData()) {
-        return false;
-      }
 
       if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
         return this->readTwoWire();
@@ -299,8 +295,8 @@ namespace TerminalCommander {
           if (data_index == 0U) {
             // input serial buffer is empty
             this->writeErrorMsgToSerialBuffer(this->lastError.set(NoInput), this->lastError.message);
-      return false;
-    }
+            return false;
+          }
 
           if (this->command.cmdLength == 0U) {
             // serial buffer is not empty but command did not have any spaces
@@ -426,6 +422,11 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::readTwoWire(void) {
+    // TwoWire commands require more strict validation and parsing
+    if (!this->parseTwoWireData()) {
+      return false;
+    }
+
     this->pSerial->println(F("I2C Read"));
     const uint8_t i2c_address =
       (uint8_t)((this->command.twowire[0] << 4) + this->command.twowire[1]);
@@ -477,6 +478,11 @@ namespace TerminalCommander {
   }
 
   bool TerminalCommander::writeTwoWire(void) {
+    // TwoWire commands require more strict validation and parsing
+    if (!this->parseTwoWireData()) {
+      return false;
+    }
+
     if (command.argsLength < 6U) {
       this->writeErrorMsgToSerialBuffer(this->lastError.set(InvalidTwoWireWriteData), this->lastError.message);
       return;

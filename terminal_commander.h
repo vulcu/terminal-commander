@@ -178,8 +178,8 @@
         bool overflow;
 
         /*! @brief Class constructor
-         *
-         * @details A more elaborate description of the constructor.
+        *
+        * @details A more elaborate description of the constructor.
         */
         Command(void);
 
