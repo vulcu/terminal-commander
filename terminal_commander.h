@@ -12,16 +12,17 @@
   #include <Wire.h>
 
   // UART terminal console communication baud rate and timeout
-  #define TERM_LINE_ENDING          ('\n')
+  #define TERM_LINE_ENDING            ('\n')
+  #define TERM_DEFAULT_CMD_DELIMITER  ( ' ')
 
   // UART TERM console input, I2C, and 'error' buffer sizes
-  #define TERM_CHAR_BUFFER_SIZE     ( 64U)  // terminal buffer length in bytes
-  #define TERM_TWOWIRE_BUFFER_SIZE  ( 30U)  // TwoWire read/write buffer length
-  #define TERM_ERROR_MESSAGE_SIZE   ( 64U)  // error message buffer length
-  #define TERM_MICROSEC_PER_CHAR    (140U)  // assumes 57600 baud minimum
+  #define TERM_CHAR_BUFFER_SIZE       ( 64U)  // terminal buffer length in bytes
+  #define TERM_TWOWIRE_BUFFER_SIZE    ( 30U)  // TwoWire read/write buffer length
+  #define TERM_ERROR_MESSAGE_SIZE     ( 64U)  // error message buffer length
+  #define TERM_MICROSEC_PER_CHAR      (140U)  // assumes 57600 baud minimum
 
   // Maximum number of unique user-defined commands
-  #define MAX_USER_COMMANDS         ( 10U)
+  #define MAX_USER_COMMANDS           ( 10U)
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
@@ -255,7 +256,7 @@
         * @param pSerial   A pointer to an instance of the Stream class
         * @param pWire     A pointer to an instance of the TwoWire class
         */
-        TerminalCommander(Stream *pSerial, TwoWire *pWire);
+        TerminalCommander(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
         /*! @brief  Execute incoming serial string by command or protocol type
         *
@@ -283,6 +284,7 @@
         uint8_t numUserCharCallbacks = 0;
         bool isEchoEnabled = false;
         bool isNewTerminalCommandPrompt = true;
+        const char termCommandDelimiter;
 
         Error lastError;
         Command command;

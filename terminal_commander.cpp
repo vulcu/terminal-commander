@@ -136,7 +136,10 @@ namespace TerminalCommander {
     this->initialize();
   }
 
-  TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
+  TerminalCommander::TerminalCommander(Stream* pSerial, 
+    TwoWire* pWire,
+    const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) :
+    termCommandDelimiter(command_delimiter) {
     this->pSerial = pSerial;
     this->pWire = pWire;
   };
@@ -289,6 +292,9 @@ namespace TerminalCommander {
       else if ((uint8_t)this->command.serialRx[idx] == 59U) {
         // this is the ';' symbol which could be a delimiter
       }
+      else if (this->command.serialRx[idx] == this->termCommandDelimiter) {
+        // by default this is a space but can be a user-defined delimiter
+      }
       else if (this->command.serialRx[idx] == '\0') {
         // end of serial input data has been reached
         break;
@@ -314,7 +320,7 @@ namespace TerminalCommander {
 
     // create a copy of the serialRx buffer with whitespace removed for easier parsing
     for (uint8_t serialrx_index = 0; serialrx_index < TERM_CHAR_BUFFER_SIZE; serialrx_index++) {
-      if (!isSpace(this->command.serialRx[serialrx_index])) {
+      if (this->command.serialRx[serialrx_index] != this->termCommandDelimiter) {
         if (this->command.serialRx[serialrx_index] == '\0') {
           // end of serial input data has been reached
           if (data_index == 0U) {
@@ -324,17 +330,19 @@ namespace TerminalCommander {
           }
 
           if (this->command.cmdLength == 0U) {
-            // serial buffer is not empty but command did not have any spaces
+            // serial buffer is not empty but command did not have any delimiter
             this->command.cmdLength = data_index;
           }
           break;
         }
-        else {
+        
+        if (!isSpace(this->command.serialRx[serialrx_index])){
           this->command.data[data_index] = this->command.serialRx[serialrx_index];
+          data_index++;
         }
-        data_index++;
       }
-      else if ((this->command.pArgs == nullptr) && 
+      else {
+        if ((this->command.pArgs == nullptr) && 
                (data_index != 0U) && 
                (serialrx_index != (TERM_CHAR_BUFFER_SIZE - 1U))) {
         // Store pointer to next char character after the 1st space to enable passing user args
@@ -343,8 +351,13 @@ namespace TerminalCommander {
         // Store index corresponding to pointer location since it is start index of user args
         this->command.iArgs = serialrx_index;
 
-        // Space character is treated as delimiter for commands even if not a user command
+        // First delimiter instance is always treated as the delimiter for a user command
         this->command.cmdLength = data_index;
+        }
+        else if (!isSpace(this->command.serialRx[serialrx_index])) {
+          this->command.data[data_index] = this->command.serialRx[serialrx_index];
+          data_index++;
+        }
       }
     }
     this->command.argsLength = data_index - this->command.cmdLength;
