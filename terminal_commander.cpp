@@ -132,16 +132,17 @@ namespace TerminalCommander {
       // ESC[C = VT100 Right Cursor Key   ESC[D = VT100 Left Cursor Key
       if ((uint8_t)c == 8U) {
         // ASCII character '8' is backspace
-        this->command.previous();
-        if (this->isEchoEnabled) {
-          this->pSerial->print((char)8U);
+        if (this->isEchoEnabled && (this->command.index > 0)) {
+          // VT100 destructive backspace (delete from terminal output) is "\b \b"
+          this->pSerial->print(F("\b \b"));
         }
+        this->command.previous();
       }
       else {
-        this->command.next(c);
         if (this->isEchoEnabled) {
           this->pSerial->print(c);
         }
+        this->command.next(c);
       }
     };
 

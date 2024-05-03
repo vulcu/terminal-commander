@@ -171,6 +171,9 @@
         /** Total length in char and without spaces of buffer following first space character*/
         uint8_t argsLength;
 
+        /** Index of current character in incoming serial rx data array */
+        uint8_t index;
+
         /** True if the incoming serial data transfer is complete (newline was received) */
         bool complete;
 
@@ -244,8 +247,6 @@
         void reset(void);
 
       private:
-        /** Index of current character in incoming serial rx data array */
-        uint16_t index;
     };
 
     class TerminalCommander {
