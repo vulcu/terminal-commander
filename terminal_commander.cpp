@@ -58,6 +58,60 @@ namespace TerminalCommander {
     strErrUnrecognizedI2CTransType
   };
 
+  Command::Command(void): 
+    pArgs(nullptr),
+    iArgs(0U), 
+    cmdLength(0U), 
+    argsLength(0U), 
+    index(0U), 
+    complete(false), 
+    overflow(false) {}
+
+  void Command::next(char character) {
+    if (character == TERM_LINE_ENDING) {
+      this->complete = true;
+      return;
+    } 
+    
+    if (index >= TERM_CHAR_BUFFER_SIZE) {
+      this->overflow = true;
+      return;
+    }
+    
+    serialRx[this->index++] = character;
+  }
+
+  void Command::previous(void) {
+    if (this->index > 0) {
+      serialRx[--this->index] = '\0';
+    }
+  }
+
+  void Command::flushInput(void) {
+    memset(this->serialRx,  '\0', sizeof(this->serialRx));
+    this->complete = false;
+    this->overflow = false;
+  }
+
+  void Command::flushTwoWire(void) {
+    memset(this->twowire, 0, sizeof(this->twowire));
+  }
+
+  void Command::initialize(void) {
+    this->pArgs       = nullptr;
+    this->iArgs       = 0U;
+    this->cmdLength   = 0U;
+    this->argsLength  = 0U;
+    this->index       = 0U;
+    this->flushTwoWire();
+    memset(this->data, '\0', sizeof(this->data));
+  }
+
+  void Command::reset(void) {
+    this->flushInput();
+    this->initialize();
+  }
+
   TerminalCommander::TerminalCommander(Stream* pSerial, TwoWire* pWire) {
     this->pSerial = pSerial;
     this->pWire = pWire;
