@@ -49,7 +49,7 @@
 
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
-      /// @brief User char* callback lambda expression that does not capture local variables
+      /** @brief User char* callback lambda expression that does not capture local variables */
       typedef void (user_callback_char_fn_t)(char*, size_t);
 
       // alt: the following works for lambda expressions that capture local variables
@@ -69,7 +69,7 @@
         user_callback_char_fn_t *callback; // could be pointer?
       };
 
-      /// @brief Index of the string error table array
+      /** @brief Index of the string error table array */
       enum error_type_t {
         NoError = 0,
         NoInput, 
@@ -85,7 +85,7 @@
         UnrecognizedI2CTransType, 
       };
 
-      /// @brief Error names returned by Wire.endTransmission()
+      /** @brief Error names returned by Wire.endTransmission() */
       enum twi_error_type_t {
         NO_ERROR = 0,
         TX_BUFFER_OVERFLOW, 
@@ -166,6 +166,10 @@
           static const char *const string_error_table[] PROGMEM;
       };
 
+    /**
+     * @class Command "terminal_commander.h"
+     * @brief Terminal Commander command buffers, pointers, and indicies
+     */
     class Command {
       public:
         /** Fixed array for raw incoming serial rx data */
@@ -183,51 +187,54 @@
         /** Index of the serial buffer element pArgs points to */
         uint8_t iArgs;
 
-        /** Total length in char of buffer preceding first space character*/
+        /** Total length in char of buffer preceding first command delimiter character*/
         uint8_t cmdLength;
 
-        /** Total length in char and without spaces of buffer following first space character*/
+        /** Total length in char and without spaces of buffer after command delimiter character*/
         uint8_t argsLength;
 
         /** Index of current character in incoming serial rx data array */
         uint8_t index;
 
-        /** True if the incoming serial data transfer is complete (newline was received) */
+        /** True if incoming serial data transfer is complete (line ending was received) */
         bool complete;
 
-        /** True if the incoming serial rx data overflowed the allocated buffer size */
+        /** True if incoming serial rx data overflowed the size allocated by TERM_CHAR_BUFFER_SIZE */
         bool overflow;
 
-        /*! @brief Class constructor
+        /*! @brief Construct an instance of the Command class
         *
-        * @details A more elaborate description of the constructor.
+        * @details Constructor for Command class, takes no arguments
         */
         Command(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Add character to buffer and increment buffer index
          *
-         * @details A more elaborate description of the constructor.
+         * @details Add a single character to the incoming serialRx buffer
+         *          and increment the buffer index by 1
          * 
-         * @param   param Description of the input parameter
+         * @param   char Character to add to the incoming buffer
          * @returns void
          */
         void next(char character);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Decrement buffer index and delete character at the previous index
          *
-         * @details A more elaborate description of the constructor.
+         * @details Decrement the index of the incoming serialRx buffer and 
+         *          reset the character at the previous index back to '\0'
          * 
-         * @param   param Description of the input parameter
+         * @param   void
          * @returns void
          */
         void previous(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear incoming buffer contents and reset overflow and complete flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Clear the entire serialRx buffer by setting all elements to '\0',
+         *          then clear 'overflow' and 'complete' flags by setting to false
          * 
          * @param   void
          * @returns void
@@ -235,19 +242,21 @@
         void flushInput(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear twowire buffer contents
          *
-         * @details A more elaborate description of the constructor.
+         * @details Clear the entire twowire buffer by setting contents to '\0'
          * 
-         * @param   param Description of the input parameter
+         * @param   void
          * @returns void
          */
         void flushTwoWire(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear data and twowire buffers and reset all indicies, pointers, and flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Clear contents of the data and twowire buffers by setting all elements 
+         *          to '\0', and reset all indicies, pointers, and flags to default value.
+         *          Note, this method does NOT clear data from the serialRx buffer.
          * 
          * @param   void
          * @returns void
@@ -255,9 +264,9 @@
         void initialize(void);
 
         /**
-         * @brief Use this struct to build and config terminal command data.
+         * @brief Clear contents of all buffers and reset all indicies, pointers, and flags
          *
-         * @details A more elaborate description of the constructor.
+         * @details Reset Command object by calling flushInput() followed by initialize()
          * 
          * @param   void
          * @returns void

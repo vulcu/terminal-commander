@@ -563,7 +563,7 @@ namespace TerminalCommander {
   bool TerminalCommander::scanTwoWireBus(void) {
     // this command does not accept additional arguments
     if ((this->command.argsLength + this->command.cmdLength) > 4U) {
-      /// TODO: this could be a warning instead of an error
+      /** TODO: this could be a warning instead of an error */
       this->lastError.set(UnrecognizedProtocol);
       return false;
     }
