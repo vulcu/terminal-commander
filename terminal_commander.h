@@ -276,14 +276,24 @@
       private:
     };
 
+    /**
+     * @class TerminalCommander "terminal_commander.h"
+     * @brief Terminal Commander terminal object
+     */
     class TerminalCommander {
       public:
-        /*! @brief Class constructor
+        /*! @brief Construct an instance of the TerminalCommander class
         *
-        * @details A more elaborate description of the constructor.
+        * @details Constructor for the TerminalCommander class
+        *          Requires a pointer to an instance of the Stream class,
+        *          and a pointer to an instance of the TwoWire class.
+        *          Optionally, single-character command delimiter may be 
+        *          defined for deliniating custom user commands and their
+        *          arguments. By default, the command delimiter is a space.
         * 
         * @param pSerial   A pointer to an instance of the Stream class
         * @param pWire     A pointer to an instance of the TwoWire class
+        * @param char      A single ASCII character
         */
         TerminalCommander(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
