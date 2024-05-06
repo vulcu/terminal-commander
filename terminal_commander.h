@@ -315,133 +315,184 @@
 
         /*! @brief The main TerminalCommander method, place this in Arduino's loop()
          *
-         * @details Reset Command object by calling flushInput() followed by initialize()
+         * @details Handle all processing for the serial terminal, including reading
+         *          and parsing of the serial buffer and execution of all callback
+         *          functions. Place this method in the loop() section of Arduino code.
          * 
          * @param   void
          * @returns void
         */
         void loop(void);
 
-        /*! @brief  Execute incoming serial string by command or protocol type
-        *
-        * @details Detailed description here.
+        /*! @brief Enable serial terminal echo
+         *
+         * @details Echo incoming terminal ASCII back to the source terminal. Useful
+         *          for programs such as TeraTerm and PuTTY. Correctly handles the
+         *          backspace input and will delete the previous terminal character.
+         *          Not recommened for terminals which send entire line in one
+         *          transmission when hitting Enter in the terminal.
+         *          Note: VT100-style control characters (^[C, ^[D, etc.) are not 
+         *          supported, so Left/Right arrow keys will generate unrecognized
+         *          inputs.
+         * 
+         * @param   bool  Boolean to enable (true) or disable (false) terminal echo.
+         * @returns void
         */
         void echo(bool);
 
-        /*! @brief  Add callback function for specific command.
-        *
-        * @details Usage:
-        *          onCommand("YOUR COMMAND", [](char* args, size_t size){
-        *              // do things
-        *          });
+        /*! @brief Attach a lambda expression or function pointer to a terminal command
+         *
+         * @details Call this inside the Arduino 'setup' function. Usage is either with a lamba
+         *          expression:
+         *            Terminal.onCommand("mycommand", [](char* args, size_t args_size) {
+         *              // custom code here
+         *            }
+         *          or with a function pointer, where myfuction points to the address of a function
+         *          which takes (char* args, size_t args_size) as arguments and returns void:
+         *            Terminal.onCommand("mycommand", &myfuction);
+         * 
+         * @param   char*                   Char array with the command name, e.g. 'mycommand'
+         * @param   user_callback_char_fn_t Lambda expr. or fn pointer matching 'void (char*, size_t)'
+         * @returns void
         */
         void onCommand(const char* command, TerminalCommanderTypes::user_callback_char_fn_t callback);
 
       private:
+        /** A struct array for storing user commands and their corresponding fn pointers */
         TerminalCommanderTypes::user_callback_char_t userCharCallbacks[MAX_USER_COMMANDS] = {};
+
+        /** Increments by one for each user callback added by onCommand() */
         uint8_t numUserCharCallbacks = 0;
+
+        /** True if serial terminal echo is enabled */
         bool isEchoEnabled = false;
+
+        /** True if the terminal object is ready for the next command and should print '>>' prompt */
         bool isNewTerminalCommandPrompt = true;
+
+        /** Terminal command delimiter, defaults to space unless specified during construction */
         const char termCommandDelimiter;
 
+        /** Instance of the Error class for maintaining the terminal error state */
         Error lastError;
+
+        /** Instance of the Command class for maintaining incoming buffers, indicies, and pointers */
         Command command;
+
+        /** Pointer to an instance of the Arduino Stream class, specified when calling constructor */
         Stream *pSerial;
+
+        /** Pointer to an instance of the Arduino Wire class, specified when calling constructor */
         TwoWire *pWire;
 
-        /*! @brief  Execute incoming serial string by command or protocol type
-        *
-        * @details Detailed description here.
-        * 
-        * @param   void
-        * @returns void
-        */
-        bool serialCommandProcessor(void);
-
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
-        * @returns bool  True if buffer is not empty and all characters are allowed
-        */
-        bool isRxBufferDataValid(void);
-
-        /**
-         * @brief Use this struct to build and config terminal command data.
+        /*! @brief  Process the incoming raw serialRx data buffer
          *
-         * @details A more elaborate description of the constructor.
+         * @details  Called once when a newline character is received from the terminal.
+         *           Handles all processing of the incoming serial buffer and calling of all
+         *           associated functionality or user commands based on serial buffer content.
          * 
          * @param   void
          * @returns void
          */
+        bool serialCommandProcessor(void);
+
+        /*! @brief Check the validity of the incoming serial buffer
+         *
+         * @details Check that the incoming serialRx buffer is not empty and contains only
+         *          allowed ASCII characters (letters, numbers, some symbols, and delimiter).
+         * 
+         * @param   param Description of the input parameter
+         * @returns bool  True if buffer is not empty and all characters are allowed
+         */
+        bool isRxBufferDataValid(void);
+
+        /*! @brief Remove all whitespace characters from the incoming serial command
+         *
+         * @details Removes all whitespace from the incoming serial command, copies this
+         *          over to a separate data buffer (original buffer is not modified), and
+         *          records the index of and a pointer to the first command delimiter found.
+         * 
+         * @param   void
+         * @returns bool  True if no errors occured during whitespace removal
+         */
         bool removeSpaces(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
+        /*! @brief Check for user callbacks and call one if the command matches
+         *
+         * @details Check the incoming command (as denoted by the command delimiter)
+         *          against the array of user commands, if any. This happens prior to
+         *          the built-in 'i2c' or 'scan' commands being checked for, allowing
+         *          these commands to be overloaded if desired. If a command matches,
+         *          execute the user callback and pass any remaining arguments to it.
+         * 
+         * @param   void
+         * @returns bool  True if no errors occured during callback checks and execution
+         */
         bool runUserCallbacks(void);
 
-        /*! @brief  Parse and error-check the incoming TwoWire command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param Description of the input parameter
-        * @returns bool  True if buffer is not empty and all characters are allowed
-        */
+        /*! @brief Parse and error-check the incoming TwoWire command string
+         *
+         * @details Checks TwoWire data to ensure it only contains hex value pairs,
+         *          no additional characters or half-bytes of data.
+         * 
+         * @param   void
+         * @returns bool  True if TwoWire buffer is not empty and has valid contents
+         */
         bool parseTwoWireData(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
+        /*! @brief  Read bytes from an address on the TwoWire bus
+         *
+         * @details Read the requested registers from the TwoWire bus (as specified
+         *          by the incoming command data). Can perform sequential reads, if
+         *          supported by the IC being read from.
+         * 
+         * @param   void
+         * @returns bool  True if the read operation was successful and without errors
+         */
         bool readTwoWire(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
+        /*! @brief  Write byte to an address on the TwoWire bus
+         *
+         * @details Write the requested registers from the TwoWire bus (as specified
+         *          by the incoming command data). Can perform sequential writes, if
+         *          supported by the IC being read from.
+         * 
+         * @param   void
+         * @returns bool  True if the write operation was successful and without errors
+         */
         bool writeTwoWire(void);
 
-        /*! @brief  Error-check the incoming ASCII command string
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @param   param    Description of the input parameter
-        * @returns uint16_t Total valid character count of incoming buffer
-        */
+        /*! @brief  Scan and report all devices on the TwoWire bus
+         *
+         * @details Scans the TwoWire bus and prints the address of all devices that
+         *          ACK a transmission start operation. Scans all 7-bit addresses
+         *          from 0 to 127.
+         * 
+         * @param   void
+         * @returns bool  True if the scan operation was successful and without errors
+         */
         bool scanTwoWireBus(void);
 
-        /*! @brief  Return the integer represented by a character array
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @returns void
-        */
+        /*! @brief  Print the hexadecimal TwoWire address value to the console
+         *
+         * @details Automatically prepends an additional zero if the address
+         *          value is less than 0x10, such that the terminal output always
+         *          contains two hexadecimal digits (e.g. 0x02 vs 0x2)
+         * 
+         * @param   uint8_t The 7-bit TwoWire address to print to the terminal
+         * @returns void
+         */
         void printTwoWireAddress(uint8_t i2c_address);
 
-        /*! @brief  Return the integer represented by a character array
-        *
-        * @details Detailed description here.
-        * 
-        * @param   param    Description of the input parameter
-        * @returns void
-        */
+        /*! @brief  Print the hexadecimal TwoWire register value to the console
+         *
+         * @details Automatically prepends an additional zero if the register
+         *          value is less than 0x10, such that the terminal output always
+         *          contains two hexadecimal digits (e.g. 0x02 vs 0x2)
+         * 
+         * @param   uint8_t The TwoWire register address to print to the terminal
+         * @returns void
+         */
         void printTwoWireRegister(uint8_t i2c_register);
     };
   }
