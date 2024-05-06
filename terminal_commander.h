@@ -279,17 +279,33 @@
     /**
      * @class TerminalCommander "terminal_commander.h"
      * @brief Terminal Commander terminal object
+     * 
+     * @details The TerminalCommander class is an interactive serial
+     *          terminal for Arduino, providing serial buffer parsing
+     *          and command-line access to the I2C interface. The
+     *          class is intended to simplify the creation of a
+     *          simple command-line terminal on any Arduino device.
+     * 
+     *          Construction requires a pointer to an instance of the
+     *          Stream class, and a pointer to an instance of the TwoWire
+     *          class. Optionally, a single-character command delimiter 
+     *          may be defined for deliniating custom user commands and 
+     *          their arguments. The default command delimiter is a space.
+     * 
+     * @param pSerial   A pointer to an instance of the Stream class
+     * @param pWire     A pointer to an instance of the TwoWire class
+     * @param char      A single ASCII character
      */
     class TerminalCommander {
       public:
         /*! @brief Construct an instance of the TerminalCommander class
         *
-        * @details Constructor for the TerminalCommander class
+        * @details Constructor for the TerminalCommander class.
         *          Requires a pointer to an instance of the Stream class,
         *          and a pointer to an instance of the TwoWire class.
-        *          Optionally, single-character command delimiter may be 
+        *          Optionally, a single-character command delimiter may be 
         *          defined for deliniating custom user commands and their
-        *          arguments. By default, the command delimiter is a space.
+        *          arguments. The default command delimiter is a space.
         * 
         * @param pSerial   A pointer to an instance of the Stream class
         * @param pWire     A pointer to an instance of the TwoWire class
@@ -297,9 +313,12 @@
         */
         TerminalCommander(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
-        /*! @brief  Execute incoming serial string by command or protocol type
-        *
-        * @details Detailed description here.
+        /*! @brief The main TerminalCommander method, place this in Arduino's loop()
+         *
+         * @details Reset Command object by calling flushInput() followed by initialize()
+         * 
+         * @param   void
+         * @returns void
         */
         void loop(void);
 
