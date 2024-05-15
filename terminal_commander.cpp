@@ -523,7 +523,7 @@ namespace TerminalCommander {
 
     if (command.argsLength < 6U) {
       this->lastError.set(InvalidTwoWireWriteData);
-      return;
+      return false;
     }
 
     this->pSerial->println(F("I2C Write"));
