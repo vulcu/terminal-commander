@@ -61,12 +61,12 @@
        * @brief Use this struct to hold user commands and callback fn
        *
        * @details This struct holds a single user command (as created by
-       *          TerminalCommander::onCommand() for a callback function 
+       *          Terminal::onCommand() for a callback function 
        *          matching the type user_callback_char_fn_t
        */
       struct user_callback_char_t {
         const char *command;
-        user_callback_char_fn_t *callback; // could be pointer?
+        user_callback_char_fn_t *callback;
       };
 
       /** @brief Index of the string error table array */
@@ -277,13 +277,13 @@
     };
 
     /**
-     * @class TerminalCommander "terminal_commander.h"
+     * @class Terminal "terminal_commander.h"
      * @brief Terminal Commander terminal object
      * 
-     * @details The TerminalCommander class is an interactive serial
-     *          terminal for Arduino, providing serial buffer parsing
+     * @details The Terminal class is an interactive serial terminal
+     *          for Arduino, providing serial buffer parsing
      *          and command-line access to the I2C interface. The
-     *          class is intended to simplify the creation of a
+     *          class is intended to streamline the creation of a
      *          simple command-line terminal on any Arduino device.
      * 
      *          Construction requires a pointer to an instance of the
@@ -296,11 +296,11 @@
      * @param pWire     A pointer to an instance of the TwoWire class
      * @param char      A single ASCII character
      */
-    class TerminalCommander {
+    class Terminal {
       public:
-        /*! @brief Construct an instance of the TerminalCommander class
+        /*! @brief Construct an instance of the Terminal class
         *
-        * @details Constructor for the TerminalCommander class.
+        * @details Constructor for the Terminal class.
         *          Requires a pointer to an instance of the Stream class,
         *          and a pointer to an instance of the TwoWire class.
         *          Optionally, a single-character command delimiter may be 
@@ -311,9 +311,9 @@
         * @param pWire     A pointer to an instance of the TwoWire class
         * @param char      A single ASCII character
         */
-        TerminalCommander(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
+        Terminal(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
-        /*! @brief The main TerminalCommander method, place this in Arduino's loop()
+        /*! @brief The core Terminal method, place this in Arduino's loop()
          *
          * @details Handle all processing for the serial terminal, including reading
          *          and parsing of the serial buffer and execution of all callback

@@ -141,7 +141,7 @@ namespace TerminalCommander {
     this->initialize();
   }
 
-  TerminalCommander::TerminalCommander(Stream* pSerial, 
+  Terminal::Terminal(Stream* pSerial, 
     TwoWire* pWire,
     const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) :
     termCommandDelimiter(command_delimiter) {
@@ -149,7 +149,7 @@ namespace TerminalCommander {
     this->pWire = pWire;
   };
 
-  void TerminalCommander::loop(void) {
+  void Terminal::loop(void) {
     while(this->pSerial->available() > 0) {
       // check for buffer overflow
       if (this->command.overflow) {
@@ -215,16 +215,16 @@ namespace TerminalCommander {
     }
   }
 
-  void TerminalCommander::echo(bool enable_terminal_echo) {
+  void Terminal::echo(bool enable_terminal_echo) {
     this->isEchoEnabled = enable_terminal_echo;
   }
 
-  void TerminalCommander::onCommand(const char* command, user_callback_char_fn_t callback) {
+  void Terminal::onCommand(const char* command, user_callback_char_fn_t callback) {
     this->userCharCallbacks[this->numUserCharCallbacks] = { command, callback };
     this->numUserCharCallbacks++;
   }
 
-  bool TerminalCommander::serialCommandProcessor(void) {
+  bool Terminal::serialCommandProcessor(void) {
     // check validity of incoming buffer data
     if (!this->isRxBufferDataValid()) {
       return false;
@@ -266,7 +266,7 @@ namespace TerminalCommander {
     return false;
   }
 
-  bool TerminalCommander::isRxBufferDataValid(void) {
+  bool Terminal::isRxBufferDataValid(void) {
     // check validity of input command characters before parsing commands
     uint16_t idx;
     for (idx = 0; idx < sizeof(this->command.serialRx); idx++) {
@@ -320,7 +320,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::removeSpaces(void) {
+  bool Terminal::removeSpaces(void) {
     uint8_t data_index = 0;
 
     // create a copy of the serialRx buffer with whitespace removed for easier parsing
@@ -369,7 +369,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::runUserCallbacks(void) {
+  bool Terminal::runUserCallbacks(void) {
     // Check for user-defined functions for GPIO, configurations, reinitialization, etc.
     if (this->command.pArgs != nullptr) {
       char user_command[this->command.cmdLength + 1] = {'\0'};
@@ -407,7 +407,7 @@ namespace TerminalCommander {
     return false;
   }
 
-  bool TerminalCommander::parseTwoWireData(void) {
+  bool Terminal::parseTwoWireData(void) {
     // set correct length for command and args if command sent without spaces or badly formatted
     if (this->command.cmdLength != 4U) {
       this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
@@ -459,7 +459,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::readTwoWire(void) {
+  bool Terminal::readTwoWire(void) {
     // TwoWire commands require more strict validation and parsing
     if (!this->parseTwoWireData()) {
       return false;
@@ -515,7 +515,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::writeTwoWire(void) {
+  bool Terminal::writeTwoWire(void) {
     // TwoWire commands require more strict validation and parsing
     if (!this->parseTwoWireData()) {
       return false;
@@ -560,7 +560,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  bool TerminalCommander::scanTwoWireBus(void) {
+  bool Terminal::scanTwoWireBus(void) {
     // this command does not accept additional arguments
     if ((this->command.argsLength + this->command.cmdLength) > 4U) {
       /** TODO: this could be a warning instead of an error */
@@ -601,7 +601,7 @@ namespace TerminalCommander {
     return true;
   }
 
-  void TerminalCommander::printTwoWireAddress(uint8_t i2c_address) {
+  void Terminal::printTwoWireAddress(uint8_t i2c_address) {
     if (i2c_address < 0x10) {
       this->pSerial->print(F("Address: 0x0"));
     }
@@ -611,7 +611,7 @@ namespace TerminalCommander {
     this->pSerial->println(i2c_address, HEX);
   }
 
-  void TerminalCommander::printTwoWireRegister(uint8_t i2c_register) {
+  void Terminal::printTwoWireRegister(uint8_t i2c_register) {
     if (i2c_register < 0x10) {
       this->pSerial->print(F("Register: 0x0"));
     }
