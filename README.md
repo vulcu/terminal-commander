@@ -9,19 +9,13 @@ Command-based terminal interface for Arduino
 // I2C communication bus speed
 #define I2C_CLK_RATE  (400000L)
 
-// UART serial console communication baud rate and timeout
+// UART serial console communication baud rate
 #define TERM_BAUD_RATE            (115200L)
-#define TERM_TIMEOUT_MILLISECONDS (10U)
 
-TerminalCommander::TerminalCommander Terminal(&Serial, &Wire);
-
-void my_function(char* args, size_t size) {
-    // your code goes here
-}
+TerminalCommander::Terminal Terminal(&Serial, &Wire);
 
 void setup() {
     // initialize serial console and set baud rate
-    Serial.setTimeout(TERM_TIMEOUT_MILLISECONDS);
     Serial.begin(TERM_BAUD_RATE);
 
     // initialize Wire library and set clock rate to 400 kHz
@@ -40,6 +34,11 @@ void setup() {
     // Option2: using a pointer to a function that matches
     // type TerminalCommander::user_callback_char_fn_t
     Terminal.onCommand("MyCommand", &my_function);
+}
+
+
+void my_function(char* args, size_t size) {
+    // your code goes here
 }
 
 void loop() {
