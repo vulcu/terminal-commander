@@ -58,7 +58,6 @@ namespace TerminalCommander {
     strErrUnrecognizedI2CTransType
   };
 
-  /** Fixed array for raw incoming serial rx data */
   Error::Error(void):
     flag(false), 
     warning(false), 
