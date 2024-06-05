@@ -1,8 +1,7 @@
 /*
- * terminal_commander.h - Interactive I2C and Hardware Control Terminal for Arduino
- * 
- * Created: 3/4/2021
- * Author : Winry Litwa-Vulcu
+ * terminal_commander.h - Interactive Serial Terminal for Arduino
+ * Copyright (C) 2024 Winry Litwa-Vulcu
+ * Licensed under the GNU General Public License, Version 3
  */
 
 #include "terminal_commander.h"
