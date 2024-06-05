@@ -140,6 +140,13 @@ namespace TerminalCommander {
   }
 
   Terminal::Terminal(Stream* pSerial, 
+    TwoWire* pWire) :
+    termCommandDelimiter(TERM_DEFAULT_CMD_DELIMITER) {
+    this->pSerial = pSerial;
+    this->pWire = pWire;
+  };
+
+  Terminal::Terminal(Stream* pSerial, 
     TwoWire* pWire,
     const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) :
     termCommandDelimiter(command_delimiter) {

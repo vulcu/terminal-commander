@@ -310,6 +310,7 @@
         * @param pWire     A pointer to an instance of the TwoWire class
         * @param char      A single ASCII character
         */
+        Terminal(Stream *pSerial, TwoWire *pWire);
         Terminal(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
         /*! @brief The core Terminal method, place this in Arduino's loop()

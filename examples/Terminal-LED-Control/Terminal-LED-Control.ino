@@ -17,20 +17,22 @@ void setup() {
   Wire.begin();
   Wire.setClock(I2C_CLK_RATE);
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
   // (optional) enable VT100-style terminal echo
   Terminal.echo(false);
 
   // Option1: using a lambda expression that matches 
   // type TerminalCommander::user_callback_char_fn_t
   Terminal.onCommand("led", [](char* args, size_t size) {
-    if (args == nullptr || args_size == 0) {
-    Serial.println(F("Error: No input range provided"));
-    return;
+    if (args == nullptr || size == 0) {
+      Serial.println(F("Error: No LED state provided"));
+      return;
     }
     
-    // type 'led on' or 'led off' to turn built-in LED on/off
-    char cmd[args_size + 1] = {'\0'};
-    memcpy(cmd, args, args_size);
+    // type 'led on' or 'led off' in terminal turn built-in LED on/off
+    char cmd[size + 1] = {'\0'};
+    memcpy(cmd, args, size);
     if (strcmp(cmd, "on") == 0) {
       digitalWrite(LED_BUILTIN, HIGH);
     }
@@ -38,7 +40,7 @@ void setup() {
       digitalWrite(LED_BUILTIN, LOW);
     }
     else {
-    Serial.println(F("Error: Unrecognized LED state"));
+      Serial.println(F("Error: Unrecognized LED state"));
     }
   });
 
@@ -46,7 +48,6 @@ void setup() {
   // type TerminalCommander::user_callback_char_fn_t
   Terminal.onCommand("MyCommand", &my_function);
 }
-
 
 void my_function(char* args, size_t size) {
   // your code goes here
