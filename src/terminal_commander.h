@@ -329,7 +329,7 @@
          * @details Echo incoming terminal ASCII back to the source terminal. Useful
          *          for programs such as TeraTerm and PuTTY. Correctly handles the
          *          backspace input and will delete the previous terminal character.
-         *          Not recommened for terminals which send entire line in one
+         *          Not recommended for terminals which send the entire line in one
          *          transmission when hitting Enter in the terminal.
          *          Note: VT100-style control characters (^[C, ^[D, etc.) are not 
          *          supported, so Left/Right arrow keys will generate unrecognized
