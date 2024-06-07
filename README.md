@@ -16,6 +16,7 @@ Terminal Commander is an interactive serial terminal for Arduino, providing seri
 - [Creating User-Defined Terminal Commands](#creating-user-defined-terminal-commands)
   - [Creating a Function Callback for a Custom Command](#creating-a-function-callback-for-a-custom-command)
   - [Parsing Terminal Arguments in a User Command](#parsing-terminal-arguments-in-a-user-command)
+    - [Comparing Char Strings](#comparing-char-strings)
   - [Using a Lambda Expression Instead of a Function](#using-a-lambda-expression-instead-of-a-function)
 
 ## Installation
@@ -167,6 +168,23 @@ It is also recommended to copy the character array to a local variable within th
 ```cpp
 char cmd[size + 1] = {'\0'};
 memcpy(cmd, args, size);
+```
+
+#### Comparing Char Strings
+
+Char strings, or char arrays, can be easily compared using the `strcmp()` function included with Terminal Commander. This version is identical to that of the standard `<string.h>` library, and behaves exactly the same. It is included in Terminal Commander for convenience but is declared with `__attribute__((weak))` and will be overloaded if declared anywhere else in the code (e.g., if `<string.h>` is included elsewhere). See official C/C++ documentation for details. 
+
+Using it to compare arguments passed to the user function in the above example would be:
+
+```cpp
+if (strcmp(cmd, "on") == 0) {
+  // The output of strcmp is 0 if the strings match
+}
+else {
+  // The sign of the result is the sign of the difference between 
+  // the values of the first pair of characters (both interpreted 
+  // as unsigned char) that differ in the strings being compared
+}
 ```
 
 Putting this all together, the `my_led_function` from the previous section could contain the following:
