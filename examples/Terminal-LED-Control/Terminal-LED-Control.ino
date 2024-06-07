@@ -20,7 +20,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   // (optional) enable VT100-style terminal echo
-  Terminal.echo(false);
+  // set 'false' if using a terminal with local echo
+  Terminal.echo(true);
 
   // Option1: using a lambda expression that matches 
   // type TerminalCommander::user_callback_char_fn_t
