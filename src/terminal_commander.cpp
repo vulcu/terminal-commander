@@ -66,7 +66,7 @@ namespace TerminalCommander {
     this->flag = true;
     this->type = error_type;
     memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
-    strcpy_P(message, (char *)pgm_read_word(&(this->string_error_table[error_type])));
+    strcpy_P(message, (char *)pgm_read_ptr(&(this->string_error_table[error_type])));
   }
 
   void Error::warn(TerminalCommanderTypes::error_type_t error_type) {
