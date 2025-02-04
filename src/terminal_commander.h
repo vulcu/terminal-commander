@@ -313,6 +313,16 @@
         Terminal(Stream *pSerial, TwoWire *pWire);
         Terminal(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
+        /*! @brief Initialize the Terminal output, place this in Arduino's setup()
+         *
+         * @details This is an optional method to reduce visual clutter by initializing
+         *          the terminal prompt on a new line during Arduino setup.
+         * 
+         * @param   void
+         * @returns void
+        */
+        void init(void);
+
         /*! @brief The core Terminal method, place this in Arduino's loop()
          *
          * @details Handle all processing for the serial terminal, including reading

@@ -154,6 +154,10 @@ namespace TerminalCommander {
     this->pWire = pWire;
   };
 
+  void Terminal::init(void) {
+    this->pSerial->print(F("\n"));
+  }
+
   void Terminal::loop(void) {
     while(this->pSerial->available() > 0) {
       // check for buffer overflow
