@@ -154,10 +154,6 @@ namespace TerminalCommander {
     this->pWire = pWire;
   };
 
-  void Terminal::init(void) {
-    this->pSerial->print(F("\n"));
-  }
-
   void Terminal::loop(void) {
     while(this->pSerial->available() > 0) {
       // check for buffer overflow
@@ -169,8 +165,8 @@ namespace TerminalCommander {
       char c = (char)this->pSerial->read();
 
       // Could add handling here for ASCII '27' escape sequence indicator e.g.
-      // ESC[A = VT100 Up Cursor Key      ESC[B = VT100 Down Cursor Key
-      // ESC[C = VT100 Right Cursor Key   ESC[D = VT100 Left Cursor Key
+      // \033[A = VT100 Up Cursor Key      \033[B = VT100 Down Cursor Key
+      // \033[C = VT100 Right Cursor Key   \033[D = VT100 Left Cursor Key
       if ((uint8_t)c == 8U) {
         // ASCII character '8' is backspace
         if (this->isEchoEnabled && (this->command.index > 0)) {
@@ -222,6 +218,12 @@ namespace TerminalCommander {
       this->isNewTerminalCommandPrompt = false;
       this->pSerial->print(F(">> "));
     }
+  }
+
+  void Terminal::initialize(void) {
+    this->lastError.clear();
+    this->command.reset();
+    this->pSerial->print(F("\n"));
   }
 
   void Terminal::echo(bool enable_terminal_echo) {
@@ -570,7 +572,7 @@ namespace TerminalCommander {
   }
 
   bool Terminal::scanTwoWireBus(void) {
-    // this command does not accept additional arguments
+    // This command does not accept additional arguments
     if ((this->command.argsLength + this->command.cmdLength) > 4U) {
       /** TODO: this could be a warning instead of an error */
       this->lastError.set(UnrecognizedProtocol);
