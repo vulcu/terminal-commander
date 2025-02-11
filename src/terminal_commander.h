@@ -332,7 +332,7 @@
          * @param   void
          * @returns void
         */
-        void initialize(void);
+        void init(void);
 
         /*! @brief Enable serial terminal echo
          *

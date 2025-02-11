@@ -220,7 +220,7 @@ namespace TerminalCommander {
     }
   }
 
-  void Terminal::initialize(void) {
+  void Terminal::init(void) {
     this->lastError.clear();
     this->command.reset();
     this->pSerial->print(F("\n"));
