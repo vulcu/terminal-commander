@@ -95,6 +95,31 @@
       };
     }
 
+    class Print {
+      public:
+        template<typename Stream, typename X>
+        static void print(Stream *pSerial, X&& x) {
+          pSerial->print(x);
+        }
+
+        template<typename Stream, typename X, typename... Args>
+        static void print(Stream *pSerial, X&& x, Args&&... args) {
+          pSerial->print(x);
+          print(pSerial, args...);
+        }
+
+        template<typename Stream, typename X>
+        static void println(Stream *pSerial, X&& x) {
+          pSerial->println(x);
+        }
+
+        template<typename Stream, typename X, typename... Args>
+        static void println(Stream *pSerial, X&& x, Args&&... args) {
+          pSerial->print(x);
+          println(pSerial, args...);
+        }
+    };
+
     /**
      * @class Error "terminal_commander.h"
      * @brief Terminal Commander error states and messages
