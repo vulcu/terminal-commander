@@ -231,6 +231,17 @@ namespace TerminalCommander {
   }
 
   void Terminal::onCommand(const char* command, user_callback_char_fn_t callback) {
+    if (this->numUserCharCallbacks >= MAX_USER_COMMANDS) {
+      TerminalCommander::Print::println(this->pSerial,
+                                        F("Error: User Command count exceeded, maximum is "), 
+                                        MAX_USER_COMMANDS);
+      TerminalCommander::Print::println(this->pSerial, 
+                                        F("! \""), 
+                                        command, 
+                                        F("\" was not added to user command list"));
+      return;
+    }
+
     this->userCharCallbacks[this->numUserCharCallbacks] = { command, callback };
     this->numUserCharCallbacks++;
   }
