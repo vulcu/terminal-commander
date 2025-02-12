@@ -95,6 +95,11 @@
       };
     }
 
+    /**
+     * @class Print "terminal_commander.h"
+     * @brief Terminal Commander template class utilizing variadic template 
+     *        recursion for efficient printing of multiple argument types
+     */
     class Print {
       public:
         template<typename Stream, typename X>
