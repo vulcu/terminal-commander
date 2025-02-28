@@ -93,6 +93,16 @@
         OTHER, 
         TIME_OUT
       };
+
+      /** @brief Error names returned by Wire.endTransmission() */
+      enum gpio_type_t {
+        DIGITAL_READ = 0,
+        DIGITAL_WRITE,
+        ANALOG_READ, 
+        PWM_WRITE,
+        ENABLE_PULLUP,
+        DISABLE_PULLUP
+      };
     }
 
     /**
@@ -221,6 +231,12 @@
 
         /** Total length in char and without spaces of buffer after command delimiter character*/
         uint8_t argsLength;
+
+        /** Index of current character in incoming serial rx data array */
+        int8_t gpioWritePin;
+
+        /** Index of current character in incoming serial rx data array */
+        uint8_t gpioWriteValue;
 
         /** Index of current character in incoming serial rx data array */
         uint8_t index;
@@ -534,6 +550,34 @@
          * @returns void
          */
         void printTwoWireRegister(uint8_t i2c_register);
+
+        /*! @brief Parse and error-check the incoming TGPIO command string
+         *
+         * @details Checks GPIO data to ensure it only contains a pin number and
+         *          boolean value, with no additional characters.
+         * 
+         * @param   void
+         * @returns bool  True if GPIO input is not empty and has valid contents
+         */
+        bool parseGpioCommand(void);
+
+        /*! @brief  
+         *
+         * @details 
+         * 
+         * @param   void
+         * @returns bool  True if the gpio operation was successful and without errors
+         */
+        bool readGpio(void);
+
+        /*! @brief  
+         *
+         * @details 
+         * 
+         * @param   void
+         * @returns bool  True if the gpio operation was successful and without errors
+         */
+        bool writeGpio(void);
     };
   }
 #endif

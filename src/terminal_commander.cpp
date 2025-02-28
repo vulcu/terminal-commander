@@ -282,6 +282,17 @@ namespace TerminalCommander {
              (this->command.data[3] == 'n' || this->command.data[3] == 'N')) {
       return this->scanTwoWireBus();
     }
+    else if ((this->command.data[0] == 'g' || this->command.data[0] == 'G') &&
+             (this->command.data[1] == 'p' || this->command.data[1] == 'P') &&
+             (this->command.data[2] == 'i' || this->command.data[2] == 'I') &&
+             (this->command.data[3] == 'o' || this->command.data[3] == 'O')) {
+      if (this->command.data[3] == 'r' || this->command.data[3] == 'R') {
+        return this->readGpio();
+      }
+      else if (this->command.data[3] == 'w' || this->command.data[3] == 'W') {
+        return this->writeGpio();
+      }
+    }
 
     // no terminal commander or user-defined command was identified
     this->lastError.set(UnrecognizedProtocol);
@@ -641,5 +652,75 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
+  }
+
+  bool Terminal::parseGpioCommand(void) {
+    // convert buffer from from ASCII to hex and check if it contains only allowable values
+    uint8_t idx = this->command.cmdLength;
+    for ( ; idx < ((uint8_t)sizeof(this->command.data)); idx++) {
+      if (this->command.data[idx] == '\0') {
+        // end of serial input data has been reached
+        break;
+      }
+      else {
+        this->command.data[idx] = (uint8_t)this->command.data[idx];
+      }
+
+      if ((this->command.twowire[idx] > 96U) && (this->command.twowire[idx] < 103U)) {
+        // check for lower-case letters [a-f] and convert to upper-case
+        this->command.twowire[idx] -= 32U;
+      }
+
+      if ((this->command.twowire[idx] > 47U) && (this->command.twowire[idx] < 58U)) {
+        // check for numbers [0-9] and convert ASCII value to numeric
+        this->command.twowire[idx] -= 48U;
+      }
+      else if ((this->command.twowire[idx] > 64U) && (this->command.twowire[idx] < 71U)) {
+          // check for upper-case letters [A-F] and convert ASCII to numeric
+          this->command.twowire[idx] -= 55U;  //subract 65, but add 10 because A == 10
+      }
+      else {
+        // an command character is invalid or unrecognized
+        this->lastError.set(InvalidTwoWireCharacter);
+        return false;
+      }
+    }
+
+    if (idx < 3) {
+      // command length does not contain an address and a register
+      this->lastError.set(InvalidTwoWireCmdLength);
+      return false;
+    }
+    else if ((idx >> 1) != ((idx + 1) >> 1)) {
+      // command buffer does not specify hex values in multiples of 8 bits
+      this->lastError.set(InvalidHexValuePair);
+      return false;
+    }
+
+    
+    return true;
+  }
+
+  bool Terminal::readGpio(void) {
+    // TwoWire commands require more strict validation and parsing
+    if (!this->parseGpioCommand()) {
+      return false;
+    }
+
+    this->pSerial->println(F("I2C Read"));
+    
+    this->pSerial->print(F("Read Data:"));
+    return true;
+  }
+
+  bool Terminal::writeGpio(void) {
+    // TwoWire commands require more strict validation and parsing
+    if (!this->parseGpioCommand()) {
+      return false;
+    }
+
+    this->pSerial->println(F("I2C Write"));
+    
+    return true;
   }
 }
