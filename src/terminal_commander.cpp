@@ -429,7 +429,7 @@ namespace TerminalCommander {
     return false;
   }
 
-  bool Terminal::parseTwoWireData(void) {
+  bool Terminal::parseTwoWireCommand(void) {
     // set correct length for command and args if command sent without spaces or badly formatted
     if (this->command.cmdLength != 4U) {
       this->command.argsLength = this->command.argsLength + this->command.cmdLength - 4U;
@@ -483,7 +483,7 @@ namespace TerminalCommander {
 
   bool Terminal::readTwoWire(void) {
     // TwoWire commands require more strict validation and parsing
-    if (!this->parseTwoWireData()) {
+    if (!this->parseTwoWireCommand()) {
       return false;
     }
 
@@ -539,7 +539,7 @@ namespace TerminalCommander {
 
   bool Terminal::writeTwoWire(void) {
     // TwoWire commands require more strict validation and parsing
-    if (!this->parseTwoWireData()) {
+    if (!this->parseTwoWireCommand()) {
       return false;
     }
 

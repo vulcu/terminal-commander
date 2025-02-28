@@ -478,7 +478,7 @@
          * @param   void
          * @returns bool  True if TwoWire buffer is not empty and has valid contents
          */
-        bool parseTwoWireData(void);
+        bool parseTwoWireCommand(void);
 
         /*! @brief  Read bytes from an address on the TwoWire bus
          *
