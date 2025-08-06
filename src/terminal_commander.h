@@ -414,6 +414,9 @@
         /** Terminal command delimiter, defaults to space unless specified during construction */
         const char termCommandDelimiter;
 
+        /** Array of char pointers for storing help messages in PROGMEM */
+        static const char *const help_message_table[] PROGMEM;
+
         /** Instance of the Error class for maintaining the terminal error state */
         Error lastError;
 
@@ -535,6 +538,17 @@
          * @returns void
          */
         void printTwoWireRegister(uint8_t i2c_register);
+
+        /*! @brief  Print a list of the built-in and user commands
+         *
+         * @details Prints out a list of the built-in commands with a brief
+         *          description of their function, along with a list of all
+         *          user-defined command strings.
+         * 
+         * @param   void
+         * @returns void
+         */
+        bool printHelp(void);
     };
   }
 #endif
