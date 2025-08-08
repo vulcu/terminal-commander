@@ -23,6 +23,9 @@
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS           ( 10U)
 
+  // Maximum characters to print per-line for help messages
+  #define HELP_MESSAGE_SIZE           (64U)
+
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
   #elif (TERM_TWOWIRE_BUFFER_SIZE > 34U)
@@ -66,6 +69,15 @@
       struct user_callback_char_t {
         const char *command;
         user_callback_char_fn_t *callback;
+      };
+
+      /** @brief Index of the string error table array */
+      enum help_topic_t {
+        Usage,
+        BuiltInScan,
+        BuiltInTwoWire,
+        BuiltInGpio,
+        UserCallbacks
       };
 
       /** @brief Index of the string error table array */
@@ -125,6 +137,41 @@
           println(pSerial, args...);
         }
     };
+        
+        /**
+     * @class Error "terminal_commander.h"
+     * @brief Terminal Commander error states and messages
+     */
+    class Help {
+      public:
+        /** Enum indexing the help_message_table array */
+        TerminalCommanderTypes::help_topic_t topic;
+
+        /** Char array for holding the terminal error message */
+        char message[HELP_MESSAGE_SIZE + 1] = {'\0'};
+        // TODO: This and Error can use the same output buffer, to save SRAM
+
+        /*! @brief Construct an instance of the Error class
+        *
+        * @details Constructor for Error class, takes no arguments
+        */
+        Help(void);
+
+        /**
+         * @brief Set a new error message and raise the error flag
+         *
+         * @details Set with set the error message using the string_error_table
+         *          and will flag that an error has occured by setting flag = true.
+         * 
+         * @param   help_topic_t TerminalCommanderTypes::error_type_t
+         * @returns void
+         */
+        void print(TerminalCommanderTypes::help_topic_t help_topic);
+
+        private:
+          /** Array of char pointers for storing help information in PROGMEM */
+          static const char **const help_message_table[] PROGMEM;
+      };
 
     /**
      * @class Error "terminal_commander.h"
@@ -191,10 +238,10 @@
          */
         void reset(void);
 
-        private:
-          /** Array of char pointers for storing error messages in PROGMEM */
-          static const char *const string_error_table[] PROGMEM;
-      };
+      private:
+        /** Array of char pointers for storing error messages in PROGMEM */
+        static const char *const string_error_table[] PROGMEM;
+    };
 
     /**
      * @class Command "terminal_commander.h"
@@ -417,6 +464,9 @@
         /** Array of char pointers for storing help messages in PROGMEM */
         static const char *const help_message_table[] PROGMEM;
 
+        /** Instance of the Help class for displaying usage and help information */
+        Help help;
+
         /** Instance of the Error class for maintaining the terminal error state */
         Error lastError;
 
@@ -538,17 +588,6 @@
          * @returns void
          */
         void printTwoWireRegister(uint8_t i2c_register);
-
-        /*! @brief  Print a list of the built-in and user commands
-         *
-         * @details Prints out a list of the built-in commands with a brief
-         *          description of their function, along with a list of all
-         *          user-defined command strings.
-         * 
-         * @param   void
-         * @returns void
-         */
-        bool printHelp(void);
     };
   }
 #endif

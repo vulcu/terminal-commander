@@ -28,25 +28,25 @@ namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
   // put common help messages into Program memory to save SRAM space
-  static const char strHelpBuiltInHelp[] PROGMEM = "Type 'help' for list of available commands\n";
-  static const char strHelpBuiltInScan[] PROGMEM = "'SCAN'\n  Scan TwoWire bus for devices and print their address\n";
-  static const char strHelpBuiltInTwoWire[] PROGMEM = "'I2C'\n  Send/Receive data and commands over the I2C bus"
-                                                      "Arguments:\n"
-                                                      "  'r' - request read transaction\n"
-                                                      "  'w' - request write transaction\n"
-                                                      "Usage:\n"
-                                                      "  'I2C' <transaction type> <address> <register> <register> ...\n"
-                                                      "Example:\n"
-                                                      "  Read 3 bytes from device at address 0x41, starting\n"
-                                                      "  at register 0x03: I2C r 41 03 00 00 00\n"
-                                                      "  Write the 2 bytes of data '0xBE 0xE5' to the device\n"
-                                                      "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n";
-  static const char strHelpBuiltInGpio[] PROGMEM = "'SCAN'\n  Scan TwoWire bus for devices and print their address\n";
-  static const char strHelpUserCallbacks[] PROGMEM = "User Callbacks:\n";
+  static const char *const strHelpUsageHelp[] PROGMEM = {"Type 'help' for list of available commands\n"};
+  static const char *const strHelpBuiltInScan[] PROGMEM = {"'SCAN'\n  Scan TwoWire bus for devices and print their address\n"};
+  static const char *const strHelpBuiltInTwoWire[] PROGMEM = {"'I2C'\n  Send/Receive data and commands over the I2C bus",
+                                                              "Arguments:\n",
+                                                              "  'r' - request read transaction\n",
+                                                              "  'w' - request write transaction\n",
+                                                              "Usage:\n",
+                                                              "  'I2C' <transaction type> <address> <register> <register> ...\n",
+                                                              "Example:\n",
+                                                              "  Read 3 bytes from device at address 0x41, starting\n",
+                                                              "  at register 0x03: I2C r 41 03 00 00 00\n",
+                                                              "  Write the 2 bytes of data '0xBE 0xE5' to the device\n",
+                                                              "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n"};
+  static const char *const strHelpBuiltInGpio[] PROGMEM = {"'SCAN'\n  Scan TwoWire bus for devices and print their address\n"};
+  static const char *const strHelpUserCallbacks[] PROGMEM = {"User Callbacks:\n"};
 
-  const char *const Terminal::help_message_table[] PROGMEM =
+  const char **const Help::help_message_table[] PROGMEM =
   {
-    strHelpBuiltInHelp,
+    strHelpUsageHelp,
     strHelpBuiltInScan,
     strHelpBuiltInTwoWire,
     strHelpBuiltInGpio,
@@ -84,6 +84,12 @@ namespace TerminalCommander {
     strErrUnrecognizedCommand, 
     strErrUnrecognizedI2CTransType
   };
+
+  Help::Help(void) {};
+
+  void Help::print(TerminalCommanderTypes::help_topic_t help_topic) {
+    
+  }
 
   Error::Error(void):
     flag(false), 
@@ -251,7 +257,7 @@ namespace TerminalCommander {
   void Terminal::init(void) {
     this->lastError.clear();
     this->command.reset();
-    this->pSerial->print(F("\n"));
+    this->help.print(Usage);
   }
 
   void Terminal::echo(bool enable_terminal_echo) {
@@ -314,7 +320,11 @@ namespace TerminalCommander {
              (this->command.data[1] == 'e' || this->command.data[1] == 'E') &&
              (this->command.data[2] == 'l' || this->command.data[2] == 'L') &&
              (this->command.data[3] == 'p' || this->command.data[3] == 'P')) {
-      return this->printHelp();
+      this->help.print(BuiltInScan);
+      this->help.print(BuiltInTwoWire);
+      this->help.print(BuiltInGpio);
+      this->help.print(UserCallbacks);
+      return true;
     }
 
     // no terminal commander or user-defined command was identified
@@ -675,9 +685,5 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
-  }
-
-  bool Terminal::printHelp(void) {
-    return true;
   }
 }
