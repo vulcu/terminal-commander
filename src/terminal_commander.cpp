@@ -414,8 +414,8 @@ namespace TerminalCommander {
               break;
             }
           }
-
-          this->userCharCallbacks[k].callback(this->command.pArgs, (size_t)(user_args_length));
+          this->parseCmd(this->command.pArgs,&(this->command.cmd_param_value));
+          this->userCharCallbacks[k].callback((struct cmd_param)this->command.cmd_param_value);
           return true;
         }
       }
@@ -423,7 +423,8 @@ namespace TerminalCommander {
     else {
       for (uint8_t k = 0; k < this->numUserCharCallbacks; k++) {
         if (strcmp(this->command.data, this->userCharCallbacks[k].command) == 0)  {
-          this->userCharCallbacks[k].callback((char*)nullptr, (size_t)0U);
+          this->command.cmd_param_value = {0};
+          this->userCharCallbacks[k].callback((struct cmd_param)this->command.cmd_param_value);
           return true;
         }
       }
@@ -643,5 +644,62 @@ namespace TerminalCommander {
       this->pSerial->print(F("Register: 0x"));
     }
     this->pSerial->println(i2c_register, HEX);
+  }
+  
+  
+int Terminal::parseCmd(const char* input, struct cmd_param* result) {
+  int i = 0;
+  char buffer[MAX_CMD_ARGC_NUM * MAX_CMD_ARGV_STR_LENGTH] = {0};
+  
+  if((result == NULL)||(input == NULL))
+  {
+    return -1;
+  }
+  result->argc = 0;
+  memset(result->argv, 0, sizeof(result->argv));
+  
+  strncpy(buffer, input, sizeof(buffer) - 1);
+  buffer[sizeof(buffer) - 1] = '\0';
+  
+  // remove '\n' of string end 
+  i = MAX_CMD_ARGC_NUM * MAX_CMD_ARGV_STR_LENGTH -1;
+  for( ; i > 0 ;i--)
+  {
+      if(buffer[i] == '\n')
+      {
+          buffer[i] = 0;
+          break;
+      }
+      else
+      if(buffer[i] !=  0)
+      {
+        break;
+      }
+  }
+
+  // remove '\r' of string end 
+  for( ;i > 0 ;i--)
+  {
+      if(buffer[i] == '\r')
+      {
+          buffer[i] = 0;
+          break;
+      }
+      else
+      if(buffer[i] !=  0)
+      {
+        break;
+      }
+  }
+
+  char* token = strtok(buffer, " ");
+  while (token != NULL && result->argc < MAX_CMD_ARGC_NUM) {
+    strncpy(result->argv[result->argc], token, (MAX_CMD_ARGV_STR_LENGTH -1));
+    result->argv[result->argc][MAX_CMD_ARGV_STR_LENGTH -1] = '\0';
+    
+    result->argc++;
+    token = strtok(NULL, " ");
+  }
+  return 0;
   }
 }

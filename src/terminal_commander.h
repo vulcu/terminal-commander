@@ -22,6 +22,10 @@
 
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS           ( 10U)
+  
+  #define MAX_CMD_ARGC_NUM             (5)
+  #define MAX_CMD_ARGV_STR_LENGTH      (10 + 1)   //each parameter max 10 char with '\0'
+  
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
@@ -29,6 +33,11 @@
     // '34' since this buffer size includes address and register bytes
     #warning "Wire library does not support transactions exceeding 32 bytes"
   #endif
+
+struct cmd_param {
+  int  argc;                                                  //parsed cmd parameter_cnt(max MAX_CMD_ARGC_NUM)
+  char argv[MAX_CMD_ARGC_NUM][MAX_CMD_ARGV_STR_LENGTH];       //parsed cmd parameter
+};
 
   /**
    * @brief Compares two null-terminated byte strings lexicographically.
@@ -49,7 +58,7 @@
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
       /** @brief User char* callback lambda expression that does not capture local variables */
-      typedef void (user_callback_char_fn_t)(char*, size_t);
+      typedef void (user_callback_char_fn_t)(struct cmd_param);
 
       // alt: the following works for lambda expressions that capture local variables
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
@@ -222,6 +231,9 @@
 
         /** Total length in char and without spaces of buffer after command delimiter character*/
         uint8_t argsLength;
+        
+        /* after parsed command parameters */
+        struct cmd_param cmd_param_value;
 
         /** Index of current character in incoming serial rx data array */
         uint8_t index;
@@ -535,6 +547,8 @@
          * @returns void
          */
         void printTwoWireRegister(uint8_t i2c_register);
+        
+        int parseCmd(const char* input, struct cmd_param* result);
     };
   }
 #endif
