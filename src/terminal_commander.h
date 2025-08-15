@@ -17,14 +17,11 @@
   // UART TERM console input, I2C, and 'error' buffer sizes
   #define TERM_CHAR_BUFFER_SIZE       ( 64U)  // terminal buffer length in bytes
   #define TERM_TWOWIRE_BUFFER_SIZE    ( 30U)  // TwoWire read/write buffer length
-  #define TERM_ERROR_MESSAGE_SIZE     ( 64U)  // error message buffer length
+  #define TERM_OUTPUT_MESSAGE_SIZE    ( 64U)  // error message buffer length
   #define TERM_MICROSEC_PER_CHAR      (140U)  // assumes 57600 baud minimum
 
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS           ( 10U)
-
-  // Maximum characters to print per-line for help messages
-  #define HELP_MESSAGE_SIZE           (64U)
 
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
@@ -148,7 +145,7 @@
         TerminalCommanderTypes::help_topic_t topic;
 
         /** Char array for holding the terminal error message */
-        char message[HELP_MESSAGE_SIZE + 1] = {'\0'};
+        char message[TERM_OUTPUT_MESSAGE_SIZE + 1] = {'\0'};
         // TODO: This and Error can use the same output buffer, to save SRAM
 
         /*! @brief Construct an instance of the Error class
@@ -189,7 +186,7 @@
         TerminalCommanderTypes::error_type_t type;
 
         /** Char array for holding the terminal error message */
-        char message[TERM_ERROR_MESSAGE_SIZE + 1] = {'\0'};
+        char message[TERM_OUTPUT_MESSAGE_SIZE + 1] = {'\0'};
 
         /*! @brief Construct an instance of the Error class
         *

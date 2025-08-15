@@ -88,7 +88,9 @@ namespace TerminalCommander {
   Help::Help(void) {};
 
   void Help::print(TerminalCommanderTypes::help_topic_t help_topic) {
-    
+    memset(message, '\0', TERM_OUTPUT_MESSAGE_SIZE);
+    strcpy_P(message, (char *)pgm_read_ptr(&(this->help_message_table[help_topic])));
+    memset(this->message,  '\0', sizeof(this->message));
   }
 
   Error::Error(void):
@@ -99,7 +101,7 @@ namespace TerminalCommander {
   void Error::set(TerminalCommanderTypes::error_type_t error_type) {
     this->flag = true;
     this->type = error_type;
-    memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
+    memset(message, '\0', TERM_OUTPUT_MESSAGE_SIZE);
     strcpy_P(message, (char *)pgm_read_ptr(&(this->string_error_table[error_type])));
   }
 
