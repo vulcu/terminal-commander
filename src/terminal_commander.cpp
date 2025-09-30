@@ -85,12 +85,14 @@ namespace TerminalCommander {
     strErrUnrecognizedI2CTransType
   };
 
-  Help::Help(void) {};
+  Help::Help(Stream *pSerial) {
+    this->pSerial = pSerial;
+  }
 
   void Help::print(TerminalCommanderTypes::help_topic_t help_topic) {
-    memset(message, '\0', TERM_OUTPUT_MESSAGE_SIZE);
-    strcpy_P(message, (char *)pgm_read_ptr(&(this->help_message_table[help_topic])));
-    memset(this->message,  '\0', sizeof(this->message));
+    this->pSerial->print(F("Help::HelpTopic -> "));
+    this->pSerial->println((uint8_t)help_topic);
+    // this->pSerial->print((char *)pgm_read_ptr(&(this->help_message_table[help_topic])));
   }
 
   Error::Error(void):
