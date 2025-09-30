@@ -186,7 +186,7 @@
         /** Char array for holding the terminal error message */
         char message[TERM_OUTPUT_MESSAGE_SIZE + 1] = {'\0'};
 
-        /*! @brief Construct an instance of the Error class
+        /** @brief Construct an instance of the Error class
         *
         * @details Constructor for Error class, takes no arguments
         */
@@ -274,7 +274,7 @@
         /** True if incoming serial rx data overflowed the size allocated by TERM_CHAR_BUFFER_SIZE */
         bool overflow;
 
-        /*! @brief Construct an instance of the Command class
+        /** @brief Construct an instance of the Command class
         *
         * @details Constructor for Command class, takes no arguments
         */
@@ -370,7 +370,7 @@
      */
     class Terminal {
       public:
-        /*! @brief Construct an instance of the Terminal class
+        /** @brief Construct an instance of the Terminal class
         *
         * @details Constructor for the Terminal class.
         *          Requires a pointer to an instance of the Stream class,
@@ -386,7 +386,7 @@
         Terminal(Stream *pSerial, TwoWire *pWire);
         Terminal(Stream *pSerial, TwoWire *pWire, const char command_delimiter);
 
-        /*! @brief The core Terminal method, place this in Arduino's loop()
+        /** @brief The core Terminal method, place this in Arduino's loop()
          *
          * @details Handle all processing for the serial terminal, including reading
          *          and parsing of the serial buffer and execution of all callback
@@ -397,7 +397,7 @@
         */
         void loop(void);
 
-        /*! @brief Initialize the Terminal output, place this in Arduino's setup()
+        /** @brief Initialize the Terminal output, place this in Arduino's setup()
          *
          * @details This is an optional method to reduce visual clutter by initializing
          *          the terminal prompt on a new line during Arduino setup.
@@ -407,7 +407,7 @@
         */
         void init(void);
 
-        /*! @brief Enable serial terminal echo
+        /** @brief Enable serial terminal echo
          *
          * @details Echo incoming terminal ASCII back to the source terminal. Useful
          *          for programs such as TeraTerm and PuTTY. Correctly handles the
@@ -423,7 +423,7 @@
         */
         void echo(bool);
 
-        /*! @brief Attach a lambda expression or function pointer to a terminal command
+        /** @brief Attach a lambda expression or function pointer to a terminal command
          *
          * @details Call this inside the Arduino 'setup' function. Usage is either with a lamba
          *          expression:
@@ -474,7 +474,7 @@
         /** Pointer to an instance of the Arduino Wire class, specified when calling constructor */
         TwoWire *pWire;
 
-        /*! @brief  Process the incoming raw serialRx data buffer
+        /** @brief  Process the incoming raw serialRx data buffer
          *
          * @details  Called once when a newline character is received from the terminal.
          *           Handles all processing of the incoming serial buffer and calling of all
@@ -485,7 +485,7 @@
          */
         bool serialCommandProcessor(void);
 
-        /*! @brief Check the validity of the incoming serial buffer
+        /** @brief Check the validity of the incoming serial buffer
          *
          * @details Check that the incoming serialRx buffer is not empty and contains only
          *          allowed ASCII characters (letters, numbers, some symbols, and delimiter).
@@ -495,7 +495,7 @@
          */
         bool isRxBufferDataValid(void);
 
-        /*! @brief Remove all whitespace characters from the incoming serial command
+        /** @brief Remove all whitespace characters from the incoming serial command
          *
          * @details Removes all whitespace from the incoming serial command, copies this
          *          over to a separate data buffer (original buffer is not modified), and
@@ -506,7 +506,7 @@
          */
         bool removeSpaces(void);
 
-        /*! @brief Check for user callbacks and call one if the command matches
+        /** @brief Check for user callbacks and call one if the command matches
          *
          * @details Check the incoming command (as denoted by the command delimiter)
          *          against the array of user commands, if any. This happens prior to
@@ -519,7 +519,7 @@
          */
         bool runUserCallbacks(void);
 
-        /*! @brief Parse and error-check the incoming TwoWire command string
+        /** @brief Parse and error-check the incoming TwoWire command string
          *
          * @details Checks TwoWire data to ensure it only contains hex value pairs,
          *          no additional characters or half-bytes of data.
@@ -529,7 +529,7 @@
          */
         bool parseTwoWireCommand(void);
 
-        /*! @brief  Read bytes from an address on the TwoWire bus
+        /** @brief  Read bytes from an address on the TwoWire bus
          *
          * @details Read the requested registers from the TwoWire bus (as specified
          *          by the incoming command data). Can perform sequential reads, if
@@ -540,7 +540,7 @@
          */
         bool readTwoWire(void);
 
-        /*! @brief  Write byte to an address on the TwoWire bus
+        /** @brief  Write byte to an address on the TwoWire bus
          *
          * @details Write the requested registers from the TwoWire bus (as specified
          *          by the incoming command data). Can perform sequential writes, if
@@ -551,7 +551,7 @@
          */
         bool writeTwoWire(void);
 
-        /*! @brief  Scan and report all devices on the TwoWire bus
+        /** @brief  Scan and report all devices on the TwoWire bus
          *
          * @details Scans the TwoWire bus and prints the address of all devices that
          *          ACK a transmission start operation. Scans all 7-bit addresses
@@ -562,7 +562,7 @@
          */
         bool scanTwoWireBus(void);
 
-        /*! @brief  Print the hexadecimal TwoWire address value to the console
+        /** @brief  Print the hexadecimal TwoWire address value to the console
          *
          * @details Automatically prepends an additional zero if the address
          *          value is less than 0x10, such that the terminal output always
@@ -573,7 +573,7 @@
          */
         void printTwoWireAddress(uint8_t i2c_address);
 
-        /*! @brief  Print the hexadecimal TwoWire register value to the console
+        /** @brief  Print the hexadecimal TwoWire register value to the console
          *
          * @details Automatically prepends an additional zero if the register
          *          value is less than 0x10, such that the terminal output always
