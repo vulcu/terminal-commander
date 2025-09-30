@@ -178,7 +178,8 @@ namespace TerminalCommander {
   }
 
   Terminal::Terminal(Stream* pSerial, 
-    TwoWire* pWire) :
+    TwoWire* pWire) : 
+    help(pSerial), 
     termCommandDelimiter(TERM_DEFAULT_CMD_DELIMITER) {
     this->pSerial = pSerial;
     this->pWire = pWire;
@@ -186,7 +187,8 @@ namespace TerminalCommander {
 
   Terminal::Terminal(Stream* pSerial, 
     TwoWire* pWire,
-    const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) :
+    const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) : 
+    help(pSerial), 
     termCommandDelimiter(command_delimiter) {
     this->pSerial = pSerial;
     this->pWire = pWire;
