@@ -17,7 +17,7 @@
   // UART TERM console input, I2C, and 'error' buffer sizes
   #define TERM_CHAR_BUFFER_SIZE       ( 64U)  // terminal buffer length in bytes
   #define TERM_TWOWIRE_BUFFER_SIZE    ( 30U)  // TwoWire read/write buffer length
-  #define TERM_OUTPUT_MESSAGE_SIZE    ( 64U)  // error message buffer length
+  #define TERM_ERROR_MESSAGE_SIZE     ( 64U)  // error message buffer length
   #define TERM_MICROSEC_PER_CHAR      (140U)  // assumes 57600 baud minimum
 
   // Maximum number of unique user-defined commands
@@ -194,7 +194,7 @@
         TerminalCommanderTypes::error_type_t type;
 
         /** Char array for holding the terminal error message */
-        char message[TERM_OUTPUT_MESSAGE_SIZE + 1] = {'\0'};
+        char message[TERM_ERROR_MESSAGE_SIZE + 1] = {'\0'};
 
         /** @brief Construct an instance of the Error class
         *

@@ -134,7 +134,7 @@ namespace TerminalCommander {
   void Error::set(TerminalCommanderTypes::error_type_t error_type) {
     this->flag = true;
     this->type = error_type;
-    memset(message, '\0', TERM_OUTPUT_MESSAGE_SIZE);
+    memset(message, '\0', TERM_ERROR_MESSAGE_SIZE);
     strcpy_P(message, (char *)pgm_read_ptr(&(this->string_error_table[error_type])));
   }
 
