@@ -23,6 +23,13 @@
   // Maximum number of unique user-defined commands
   #define MAX_USER_COMMANDS           ( 10U)
 
+  // Number of terminal lines printed for each message type
+  #define HELP_LINECOUNT_USAGE    ( 1U)
+  #define HELP_LINECOUNT_SCAN     ( 1U)
+  #define HELP_LINECOUNT_TWOWIRE  (11U)
+  #define HELP_LINECOUNT_GPIO     ( 1U)
+  #define HELP_LINECOUNT_USER     ( 1U)
+
   #if (TERM_TWOWIRE_BUFFER_SIZE > TERM_CHAR_BUFFER_SIZE)
     #error "TwoWire buffer size must not exceed terminal character buffer size"
   #elif (TERM_TWOWIRE_BUFFER_SIZE > 34U)

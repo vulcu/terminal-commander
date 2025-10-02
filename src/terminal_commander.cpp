@@ -28,21 +28,40 @@ namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
   // put common help messages into Program memory to save SRAM space
-  static const char *const strHelpUsageHelp[] PROGMEM = {"Type 'help' for list of available commands\n"};
-  static const char *const strHelpBuiltInScan[] PROGMEM = {"'SCAN'\n  Scan TwoWire bus for devices and print their address\n"};
-  static const char *const strHelpBuiltInTwoWire[] PROGMEM = {"'I2C'\n  Send/Receive data and commands over the I2C bus",
-                                                              "Arguments:\n",
-                                                              "  'r' - request read transaction\n",
-                                                              "  'w' - request write transaction\n",
-                                                              "Usage:\n",
-                                                              "  'I2C' <transaction type> <address> <register> <register> ...\n",
-                                                              "Example:\n",
-                                                              "  Read 3 bytes from device at address 0x41, starting\n",
-                                                              "  at register 0x03: I2C r 41 03 00 00 00\n",
-                                                              "  Write the 2 bytes of data '0xBE 0xE5' to the device\n",
-                                                              "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n"};
-  static const char *const strHelpBuiltInGpio[] PROGMEM = {"'SCAN'\n  Scan TwoWire bus for devices and print their address\n"};
-  static const char *const strHelpUserCallbacks[] PROGMEM = {"User Callbacks:\n"};
+  static const char *const strHelpUsageHelp[HELP_LINECOUNT_USAGE] PROGMEM = 
+  {
+    "Type 'help' for list of available commands\n"
+  };
+
+  static const char *const strHelpBuiltInScan[HELP_LINECOUNT_SCAN] PROGMEM = 
+  {
+    "'SCAN'\n  Scan TwoWire bus for devices and print their address\n"
+  };
+
+  static const char *const strHelpBuiltInTwoWire[HELP_LINECOUNT_TWOWIRE] PROGMEM = 
+  {
+    "'I2C'\n  Send/Receive data and commands over the I2C bus",
+    "Arguments:\n",
+    "  'r' - request read transaction\n",
+    "  'w' - request write transaction\n",
+    "Usage:\n",
+    "  'I2C' <transaction type> <address> <register> <register> ...\n",
+    "Example:\n",
+    "  Read 3 bytes from device at address 0x41, starting\n",
+    "  at register 0x03: I2C r 41 03 00 00 00\n",
+    "  Write the 2 bytes of data '0xBE 0xE5' to the device\n",
+    "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n"
+  };
+
+  static const char *const strHelpBuiltInGpio[HELP_LINECOUNT_GPIO] PROGMEM = 
+  {
+    "'SCAN'\n  Scan TwoWire bus for devices and print their address\n"
+  };
+
+  static const char *const strHelpUserCallbacks[HELP_LINECOUNT_USER] PROGMEM = 
+  {
+    "User Callbacks:\n"
+  };
 
   const char **const Help::help_message_table[] PROGMEM =
   {
