@@ -27,6 +27,16 @@ int strcmp(const char *s1, const char *s2) {
 namespace TerminalCommander {
   using namespace TerminalCommanderTypes;
 
+  // number of terminal lines printed for each type of help message
+  const uint8_t Help::help_message_line_count[] PROGMEM = 
+  {
+    HELP_LINECOUNT_USAGE,
+    HELP_LINECOUNT_SCAN,
+    HELP_LINECOUNT_TWOWIRE,
+    HELP_LINECOUNT_GPIO,
+    HELP_LINECOUNT_USER
+  };
+
   // put common help messages into Program memory to save SRAM space
   static const char *const strHelpUsageHelp[HELP_LINECOUNT_USAGE] PROGMEM = 
   {
@@ -110,7 +120,9 @@ namespace TerminalCommander {
 
   void Help::print(TerminalCommanderTypes::help_topic_t help_topic) {
     this->pSerial->print(F("Help::HelpTopic -> "));
-    this->pSerial->println((uint8_t)help_topic);
+    this->pSerial->print((uint8_t)help_topic);
+    this->pSerial->print(" Size: ");
+    this->pSerial->println(pgm_read_byte(&(this->help_message_line_count[help_topic])));
     // this->pSerial->print((char *)pgm_read_ptr(&(this->help_message_table[help_topic])));
   }
 

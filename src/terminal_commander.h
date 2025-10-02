@@ -171,6 +171,9 @@
         /** Array of char pointers for storing help information in PROGMEM */
         static const char **const help_message_table[] PROGMEM;
 
+        /** Number of lines of each help topic */
+        static const uint8_t help_message_line_count[] PROGMEM;
+
         /** Pointer to an instance of the Arduino Stream class, defined during construction */
         Stream *pSerial;
       };
