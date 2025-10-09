@@ -56,7 +56,17 @@
   namespace TerminalCommander {
     namespace TerminalCommanderTypes {
       /** @brief User char* callback lambda expression that does not capture local variables */
-      typedef void (user_callback_char_fn_t)(char*, size_t);
+      typedef void (user_callback_char_fn_t)(char *, size_t);
+
+      /**
+       * @struct help_message_t "terminal_commander.h"
+       * @brief Use this struct to hold help message character arrays in PROGMEM
+       *
+       * @details This struct holds a single line of any help message stored in PROGMEM
+       */
+      typedef struct help_message_t {
+        char line [64];
+      };
 
       // alt: the following works for lambda expressions that capture local variables
       // e.g. [&](){}, but requires #include <functional> which is not supported for AVR cores
@@ -169,13 +179,23 @@
 
       private:
         /** Array of char pointers for storing help information in PROGMEM */
-        static const char **const help_message_table[] PROGMEM;
+        static const TerminalCommanderTypes::help_message_t *const help_message_table[] PROGMEM;
 
         /** Number of lines of each help topic */
         static const uint8_t help_message_line_count[] PROGMEM;
 
         /** Pointer to an instance of the Arduino Stream class, defined during construction */
         Stream *pSerial;
+
+        /**
+         * @brief 
+         *
+         * @details 
+         * 
+         * @param   help_topic_t TerminalCommanderTypes::error_type_t
+         * @returns void
+         */
+        bool printProgMemCharArray(const char *str);
       };
 
     /**

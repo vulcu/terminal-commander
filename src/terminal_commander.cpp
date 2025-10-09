@@ -38,42 +38,42 @@ namespace TerminalCommander {
   };
 
   // put common help messages into Program memory to save SRAM space
-  static const char *const strHelpUsageHelp[HELP_LINECOUNT_USAGE] PROGMEM = 
+  static const help_message_t strHelpUsageHelp[HELP_LINECOUNT_USAGE] PROGMEM = 
   {
-    "Type 'help' for list of available commands\n"
+    { "Type 'help' for list of available commands\n" }
   };
 
-  static const char *const strHelpBuiltInScan[HELP_LINECOUNT_SCAN] PROGMEM = 
+  static const help_message_t strHelpBuiltInScan[HELP_LINECOUNT_SCAN] PROGMEM = 
   {
-    "'SCAN'\n  Scan TwoWire bus for devices and print their address\n"
+    { "'SCAN'\n  Scan TwoWire bus for devices and print their address\n" }
   };
 
-  static const char *const strHelpBuiltInTwoWire[HELP_LINECOUNT_TWOWIRE] PROGMEM = 
+  static const help_message_t strHelpBuiltInTwoWire[HELP_LINECOUNT_TWOWIRE] PROGMEM = 
   {
-    "'I2C'\n  Send/Receive data and commands over the I2C bus",
-    "Arguments:\n",
-    "  'r' - request read transaction\n",
-    "  'w' - request write transaction\n",
-    "Usage:\n",
-    "  'I2C' <transaction type> <address> <register> <register> ...\n",
-    "Example:\n",
-    "  Read 3 bytes from device at address 0x41, starting\n",
-    "  at register 0x03: I2C r 41 03 00 00 00\n",
-    "  Write the 2 bytes of data '0xBE 0xE5' to the device\n",
-    "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n"
+    { "'I2C'\n  Send/Receive data and commands over the I2C bus" },
+    { "Arguments:\n" },
+    { "  'r' - request read transaction\n" },
+    { "  'w' - request write transaction\n" },
+    { "Usage:\n" },
+    { "  'I2C' <transaction type> <address> <register> <register> ...\n" },
+    { "Example:\n" } ,
+    { "  Read 3 bytes from device at address 0x41, starting\n" } ,
+    { "  at register 0x03: I2C r 41 03 00 00 00\n" } ,
+    { "  Write the 2 bytes of data '0xBE 0xE5' to the device\n" } ,
+    { "  at address 0x27 and register 0x1C: I2C w 27 1C BE E5\n" }
   };
 
-  static const char *const strHelpBuiltInGpio[HELP_LINECOUNT_GPIO] PROGMEM = 
+  static const help_message_t strHelpBuiltInGpio[HELP_LINECOUNT_GPIO] PROGMEM = 
   {
-    "'SCAN'\n  Scan TwoWire bus for devices and print their address\n"
+    { "'SCAN'\n  Scan TwoWire bus for devices and print their address\n" }
   };
 
-  static const char *const strHelpUserCallbacks[HELP_LINECOUNT_USER] PROGMEM = 
+  static const help_message_t strHelpUserCallbacks[HELP_LINECOUNT_USER] PROGMEM = 
   {
-    "User Callbacks:\n"
+    { "User Callbacks:\n" }
   };
 
-  const char **const Help::help_message_table[] PROGMEM =
+  const help_message_t *const Help::help_message_table[] PROGMEM =
   {
     strHelpUsageHelp,
     strHelpBuiltInScan,
@@ -123,7 +123,27 @@ namespace TerminalCommander {
     this->pSerial->print((uint8_t)help_topic);
     this->pSerial->print(" Size: ");
     this->pSerial->println(pgm_read_byte(&(this->help_message_line_count[help_topic])));
-    // this->pSerial->print((char *)pgm_read_ptr(&(this->help_message_table[help_topic])));
+
+    for (uint8_t k = 0U; k <= pgm_read_byte(&(this->help_message_line_count[help_topic])) - 1U; k++) {
+      TerminalCommanderTypes::help_message_t message_line;
+      memcpy_P(&message_line, &(this->help_message_table[help_topic])[k], sizeof(message_line));
+      if (!this->printProgMemCharArray((const char *) pgm_read_word(&message_line))) {
+        this->pSerial->println(F("Error: Invalid Pointer to Help Message Character Array"));
+      }
+    }
+  }
+
+  bool Help::printProgMemCharArray(const char *char_array) {
+    if (char_array == nullptr) {
+      return false;
+    };
+
+    char message_char;
+    while ((message_char = pgm_read_byte(char_array++))) {
+      // this->pSerial->print(message_char);
+    };
+    this->pSerial->println();
+    return true;
   }
 
   Error::Error(void):
