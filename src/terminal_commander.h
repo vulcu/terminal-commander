@@ -437,18 +437,18 @@
          *
          * @details Call this inside the Arduino 'setup' function. Usage is either with a lamba
          *          expression:
-         *            Terminal.onCommand("mycommand", [](char* args, size_t args_size) {
+         *            Terminal.onCommand("mycommand", [](char *args, size_t args_size) {
          *              // custom code here
          *            }
          *          or with a function pointer, where myfuction points to the address of a function
-         *          which takes (char* args, size_t args_size) as arguments and returns void:
+         *          which takes (char *args, size_t args_size) as arguments and returns void:
          *            Terminal.onCommand("mycommand", &myfuction);
          * 
-         * @param   char*                   Char array with the command name, e.g. 'mycommand'
+         * @param   char *                  Char array with the command name, e.g. 'mycommand'
          * @param   user_callback_char_fn_t Lambda expr. or fn pointer matching 'void (char*, size_t)'
          * @returns void
         */
-        void onCommand(const char* command, TerminalCommanderTypes::user_callback_char_fn_t callback);
+        void onCommand(const char *command, TerminalCommanderTypes::user_callback_char_fn_t callback);
 
       private:
         /** A struct array for storing user commands and their corresponding fn pointers */

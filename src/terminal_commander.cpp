@@ -208,16 +208,16 @@ namespace TerminalCommander {
     this->initialize();
   }
 
-  Terminal::Terminal(Stream* pSerial, 
-    TwoWire* pWire) : 
+  Terminal::Terminal(Stream *pSerial, 
+    TwoWire *pWire) : 
     help(pSerial), 
     termCommandDelimiter(TERM_DEFAULT_CMD_DELIMITER) {
     this->pSerial = pSerial;
     this->pWire = pWire;
   };
 
-  Terminal::Terminal(Stream* pSerial, 
-    TwoWire* pWire,
+  Terminal::Terminal(Stream *pSerial, 
+    TwoWire *pWire,
     const char command_delimiter = TERM_DEFAULT_CMD_DELIMITER) : 
     help(pSerial), 
     termCommandDelimiter(command_delimiter) {
@@ -301,7 +301,7 @@ namespace TerminalCommander {
     this->isEchoEnabled = enable_terminal_echo;
   }
 
-  void Terminal::onCommand(const char* command, user_callback_char_fn_t callback) {
+  void Terminal::onCommand(const char *command, user_callback_char_fn_t callback) {
     if (this->numUserCharCallbacks >= MAX_USER_COMMANDS) {
       TerminalCommander::Print::println(this->pSerial,
                                         F("Error: User Command count exceeded, maximum is "), 
