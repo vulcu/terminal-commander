@@ -466,9 +466,6 @@
         /** Terminal command delimiter, defaults to space unless specified during construction */
         const char termCommandDelimiter;
 
-        /** Array of char pointers for storing help messages in PROGMEM */
-        static const char *const help_message_table[] PROGMEM;
-
         /** Instance of the Help class for displaying usage and help information */
         Help help;
 
