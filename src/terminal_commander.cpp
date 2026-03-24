@@ -139,7 +139,8 @@ namespace TerminalCommander {
     };
 
     char message_char;
-    while ((message_char = pgm_read_byte(char_array++))) {
+    while ((message_char = pgm_read_ptr(char_array++))) {
+      // TODO: this is the wrong way to use pgm_read_ptr :(
       // this->pSerial->print(message_char);
     };
     this->pSerial->println();
